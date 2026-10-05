@@ -1,6 +1,6 @@
-# The Spread
+# Polls vs. Odds
 
-**Polls vs. the betting markets, for every race in 2026.** What voters say, next to what bettors bet. The Spread combines every public poll with Polymarket and Kalshi into one forecast for the House, the Senate and every district, and shows where the two disagree.
+**https://pollsvsodds.com** · Polls vs. the prediction markets, for every race in 2026. What voters say, next to what bettors bet. Polls vs. Odds combines every public poll with Polymarket and Kalshi into one forecast for the House, the Senate and every district, and shows where the two disagree.
 
 **Hosting:** this repo is private, so the site is shared as a Claude Artifact (`npm run build:artifact` packages it). To host it on GitHub Pages instead, make the repo public (or use GitHub Pro), copy `deploy/github-pages-workflow.yml` to `.github/workflows/refresh.yml`, and set Pages to deploy from GitHub Actions.
 

@@ -1,0 +1,45 @@
+# Copy to .github/workflows/deploy.yml once the repo has CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets.
+name: Refresh data and deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "7 * * * *" # hourly: polls, Kalshi and Polymarket snapshot (Polymarket also updates live in the browser)
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Refresh member list
+        run: curl -sf -o scripts/legislators-current.json https://unitedstates.github.io/congress-legislators/legislators-current.json || true
+      - name: Photos for any new candidates
+        run: node scripts/photos.mjs || true
+      - name: Pull polls and markets, run the model
+        run: node scripts/update.mjs
+      - name: Link preview image
+        run: node scripts/og.mjs
+      - name: Assemble site
+        run: |
+          mkdir -p _site/data
+          cp index.html app.js styles.css og.png robots.txt sitemap.xml _site/
+          cp -r img _site/
+          cp data/latest.json data/history.json data/states.json data/districts.json data/photos.json _site/data/
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy _site --project-name=pollsvsodds --branch=main

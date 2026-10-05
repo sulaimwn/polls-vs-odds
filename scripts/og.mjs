@@ -22,11 +22,11 @@ function card(x, title, p) {
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#f4f5f7"/>
   <rect x="70" y="62" width="34" height="24" rx="3" fill="${DEM}"/><rect x="87" y="62" width="17" height="24" fill="${REP}"/>
-  <text x="120" y="84" font-family="${F}" font-weight="800" font-size="28" fill="#15171c">The Spread</text>
+  <text x="120" y="84" font-family="${F}" font-weight="800" font-size="28" fill="#15171c">Polls vs. Odds</text>
   <text x="70" y="152" font-family="${F}" font-weight="800" font-size="54" fill="#15171c">What voters say. What bettors bet.</text>
   ${card(70, "House", L.house.p.D)}
   ${card(620, "Senate", L.senate.p.D)}
-  <text x="70" y="570" font-family="${F}" font-size="26" fill="#464b55">Polls vs. the betting markets, for every race in 2026.</text>
+  <text x="70" y="570" font-family="${F}" font-size="26" fill="#464b55">pollsvsodds.com · Polls vs. prediction markets, for every 2026 race.</text>
 </svg>`;
 await sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toFile(new URL("og.png", root).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 console.log("wrote og.png");
