@@ -18,7 +18,7 @@ const fonts = html.match(/<link rel="stylesheet" href="https:\/\/fonts\.googleap
 const body = html.match(/<body>([\s\S]*)<\/body>/)[1].replace('<script src="app.js" defer></script>', '<script>window.CR_STATIC = true;</script>\n<script src="app.js" defer></script>');
 fs.writeFileSync(new URL("index.html", out), `${title}\n${fonts}\n<link rel="stylesheet" href="styles.css">\n${body.trim()}\n`);
 for (const f of ["styles.css", "app.js"]) fs.copyFileSync(new URL(f, root), new URL(f, out));
-for (const f of ["history.json", "states.json", "hexmap.json", "photos.json"]) fs.copyFileSync(new URL(`data/${f}`, root), new URL(`data/${f}`, out));
+for (const f of ["history.json", "states.json", "photos.json"]) fs.copyFileSync(new URL(`data/${f}`, root), new URL(`data/${f}`, out));
 
 // inline photos (downsized) into latest.json
 const latest = JSON.parse(fs.readFileSync(new URL("data/latest.json", root)));
