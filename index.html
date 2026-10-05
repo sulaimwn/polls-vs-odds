@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Who Will Win Congress?</title>
-<meta name="description" content="A simple 2026 midterm forecast for the House and Senate, built from public polls and betting markets. Tap any state to see its races.">
+<title>The Spread</title>
+<meta name="description" content="Polls vs. the betting markets, for every race in 2026. Every public poll combined with Polymarket and Kalshi into one forecast for the House, the Senate and every district.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Who will win Congress in 2026?">
-<meta property="og:description" content="Plain-English House and Senate odds from polls and betting markets. Tap any state to see its races.">
+<meta property="og:title" content="The Spread: polls vs. betting markets, 2026">
+<meta property="og:description" content="What voters say. What bettors bet. One forecast for the House, the Senate and every district, and where the two disagree.">
 <meta property="og:image" content="https://sulaimwn.github.io/midterm-control-room/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%231f5fd1'/%3E%3Crect x='16' width='16' height='32' fill='%23cf3131'/%3E%3C/svg%3E">
@@ -20,11 +20,11 @@
 
 <header class="site-head">
   <div class="wrap head-row">
-    <a class="site-name" href="#top"><span class="flag" aria-hidden="true"></span>2026 Midterm Forecast</a>
+    <a class="site-name" href="#top"><span class="flag" aria-hidden="true"></span>The Spread</a>
     <nav class="site-nav" aria-label="Sections">
       <a href="#map">Map</a>
+      <a href="#split">The spread</a>
       <a href="#close">Closest races</a>
-      <a href="#split">Polls vs. bettors</a>
       <a href="#how">How it works</a>
     </nav>
   </div>
@@ -32,7 +32,7 @@
 
 <main id="top">
   <section class="intro wrap">
-    <h1>Who will win Congress in November?</h1>
+    <h1>What voters say. What bettors bet.</h1>
     <p class="lede" id="lede">Election Day is Tuesday, November 3. These odds come from public polls and betting markets.</p>
 
     <div class="cards">
@@ -52,6 +52,15 @@
       </article>
     </div>
     <p class="updated" id="updated"></p>
+  </section>
+
+  <section class="block wrap" id="split">
+    <h2>The spread: where polls and bettors disagree</h2>
+    <p class="section-note">Polls ask voters. Betting markets are people putting money on the outcome. Usually they agree. These are the races where they don't. Tap one to see why.</p>
+    <div class="two-col">
+      <div><h3>Senate</h3><ol class="race-list gap-list" id="splitSenate"></ol></div>
+      <div><h3>House</h3><ol class="race-list gap-list" id="splitHouse"></ol></div>
+    </div>
   </section>
 
   <section class="block wrap" id="map">
@@ -105,15 +114,6 @@
     <div class="two-col">
       <div><h3>Senate</h3><ol class="race-list" id="closeSenate"></ol></div>
       <div><h3>House</h3><ol class="race-list" id="closeHouse"></ol></div>
-    </div>
-  </section>
-
-  <section class="block wrap" id="split">
-    <h2>Where polls and bettors disagree</h2>
-    <p class="section-note">Polls ask voters. Betting markets are people putting money on the outcome. Usually they agree. These are the races where they don't. Tap one to see why.</p>
-    <div class="two-col">
-      <div><h3>Senate</h3><ol class="race-list gap-list" id="splitSenate"></ol></div>
-      <div><h3>House</h3><ol class="race-list gap-list" id="splitHouse"></ol></div>
     </div>
   </section>
 
