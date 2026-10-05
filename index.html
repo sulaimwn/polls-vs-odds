@@ -3,283 +3,152 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Midterm Control Room</title>
-<meta name="description" content="Live 2026 House and Senate forecast: every poll and every Polymarket and Kalshi price, blended into one number. Explore every Senate race and all 435 House districts.">
-<meta name="theme-color" content="#070912">
+<title>Who Will Win Congress?</title>
+<meta name="description" content="A simple 2026 midterm forecast for the House and Senate, built from public polls and betting markets. Tap any state to see its races.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Midterm Control Room — who wins Congress in 2026?">
-<meta property="og:description" content="Live House & Senate odds combining polls, Polymarket and Kalshi. Click any state, race or district.">
+<meta property="og:title" content="Who will win Congress in 2026?">
+<meta property="og:description" content="Plain-English House and Senate odds from polls and betting markets. Tap any state to see its races.">
 <meta property="og:image" content="https://sulaimwn.github.io/midterm-control-room/og.png">
-<meta property="og:url" content="https://sulaimwn.github.io/midterm-control-room/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sulaimwn.github.io/midterm-control-room/og.png">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2a14 14 0 0 0 0 28z' fill='%234a7bff'/%3E%3Cpath d='M16 2a14 14 0 0 1 0 28z' fill='%23ff4d5e'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23070912'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%231f5fd1'/%3E%3Crect x='16' width='16' height='32' fill='%23cf3131'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,400..900;1,400..700&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header class="topbar">
-  <div class="wrap">
-    <a class="brand" href="#top" aria-label="Midterm Control Room, back to top">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span class="brand-name">Control Room <b>/26</b></span>
-    </a>
-    <nav class="nav" aria-label="Sections">
+<header class="site-head">
+  <div class="wrap head-row">
+    <a class="site-name" href="#top"><span class="flag" aria-hidden="true"></span>2026 Midterm Forecast</a>
+    <nav class="site-nav" aria-label="Sections">
       <a href="#map">Map</a>
-      <a href="#senate">Senate</a>
-      <a href="#house">House</a>
-      <a href="#trend">Trend</a>
-      <a href="#polls">Polls</a>
-      <a href="#pollsters">Pollsters</a>
-      <a href="#method">Method</a>
+      <a href="#close">Closest races</a>
+      <a href="#how">How it works</a>
     </nav>
-    <span class="live-pill" id="livePill" title="Polymarket prices refresh every minute in your browser; polls and Kalshi refresh on the server."><span class="live-dot"></span><span id="liveText">Connecting</span></span>
   </div>
 </header>
 
-<div class="ticker" aria-label="Latest polls and market moves">
-  <div class="ticker-track" id="ticker"><span class="ticker-item">Loading the latest polls and market moves…</span></div>
-</div>
-
 <main id="top">
-  <section class="hero wrap">
-    <div class="eyebrow"><span>2026 Midterms</span><span class="sep"></span><span id="countdown">Election Day · Nov 3</span><span class="sep"></span><span>Polls + Polymarket + Kalshi</span></div>
-    <h1>Who controls <span class="split">Congress</span> in 2027?</h1>
-    <p class="hero-sub" id="heroSub">One number per chamber, built from every public poll and every dollar traded on Polymarket and Kalshi. Click anything to see where it comes from.</p>
+  <section class="intro wrap">
+    <h1>Who will win Congress in November?</h1>
+    <p class="lede" id="lede">Election Day is Tuesday, November 3. These odds come from public polls and betting markets.</p>
 
-    <div class="boards">
-      <article class="board" id="board-house" aria-live="polite">
-        <div class="board-head"><div class="board-title">House <span>218 for control</span></div><div class="tag" id="house-rating">—</div></div>
-        <div class="board-main">
-          <div><div class="big-label" id="house-lead-label">—</div><div class="big" id="house-big">—</div></div>
-          <div class="opp"><div class="big-label" id="house-opp-label">—</div><div class="mid" id="house-opp">—</div></div>
-        </div>
-        <div class="tug"><div class="tug-d" id="house-tug" style="width:50%"></div><div class="tug-mid"></div></div>
-        <div class="board-seats" id="house-seats"><span>Projected seats</span><span>—</span></div>
-        <div class="sources" id="house-sources"></div>
-        <div class="formula" id="house-formula"></div>
-        <svg class="board-spark" id="house-spark" viewBox="0 0 600 54" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="cards">
+      <article class="card" id="card-house" aria-live="polite">
+        <h2 class="card-title">House of Representatives</h2>
+        <p class="card-say" id="house-say">Loading…</p>
+        <div class="chance" id="house-chance"></div>
+        <div class="seatbar" id="house-bar"></div>
+        <p class="card-foot" id="house-foot"></p>
       </article>
-      <article class="board" id="board-senate" aria-live="polite">
-        <div class="board-head"><div class="board-title">Senate <span>51 for control · VP breaks ties</span></div><div class="tag" id="senate-rating">—</div></div>
-        <div class="board-main">
-          <div><div class="big-label" id="senate-lead-label">—</div><div class="big" id="senate-big">—</div></div>
-          <div class="opp"><div class="big-label" id="senate-opp-label">—</div><div class="mid" id="senate-opp">—</div></div>
-        </div>
-        <div class="tug"><div class="tug-d" id="senate-tug" style="width:50%"></div><div class="tug-mid"></div></div>
-        <div class="board-seats" id="senate-seats"><span>Projected seats</span><span>—</span></div>
-        <div class="sources" id="senate-sources"></div>
-        <div class="formula" id="senate-formula"></div>
-        <svg class="board-spark" id="senate-spark" viewBox="0 0 600 54" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <article class="card" id="card-senate" aria-live="polite">
+        <h2 class="card-title">Senate</h2>
+        <p class="card-say" id="senate-say">Loading…</p>
+        <div class="chance" id="senate-chance"></div>
+        <div class="seatbar" id="senate-bar"></div>
+        <p class="card-foot" id="senate-foot"></p>
       </article>
     </div>
-
-    <div class="outcomes" id="outcomes" hidden>
-      <div class="outcomes-title">Balance of power<br><span class="muted" style="letter-spacing:0;text-transform:none;font-family:var(--f-body)">Polymarket combo market</span></div>
-      <div class="outcome-bar" id="outcomeBar"></div>
-      <div class="outcome-legend" id="outcomeLegend"></div>
-    </div>
+    <p class="updated" id="updated"></p>
   </section>
 
   <section class="block wrap" id="map">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">State by state</div>
-        <h2>The map</h2>
-        <p>Tap a state for its Senate race, or switch to House and tap any of the 435 districts. You get the candidates, every poll with who paid for it and how reliable the pollster is, and live market odds. Or build your own map and see who takes the majority.</p>
+    <h2>Pick a state to see its races</h2>
+    <div class="map-controls">
+      <div class="tabs" role="group" aria-label="Which races to show">
+        <button type="button" id="tabSenate" aria-pressed="true">Senate races</button>
+        <button type="button" id="tabHouse" aria-pressed="false">House races</button>
       </div>
-      <div class="map-ctrls">
-        <div class="seg" role="group" aria-label="Map chamber">
-          <button type="button" id="mapSenate" aria-pressed="true">Senate</button>
-          <button type="button" id="mapHouse" aria-pressed="false">House</button>
-        </div>
-        <button type="button" class="build-btn" id="buildBtn" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9.5 1.5l3 3-8 8H1.5v-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Build your map</span></button>
+      <label class="picker"><span class="sr-only">Choose a state</span><select id="statePick"><option value="">Choose a state from a list…</option></select></label>
+      <button type="button" class="btn build-btn" id="buildBtn" aria-pressed="false">Make your own prediction</button>
+    </div>
+
+    <div class="build" id="build" hidden>
+      <p class="build-how" id="buildHow"></p>
+      <div class="build-result" id="buildResult"></div>
+      <div class="build-actions">
+        <button type="button" class="btn" id="buildFill">Fill in the rest with our forecast</button>
+        <button type="button" class="btn" id="buildReset">Start over</button>
+        <button type="button" class="btn btn-dark" id="buildDone">I'm done</button>
       </div>
     </div>
-    <div class="grid-2">
-      <div class="panel">
-        <div class="map-hint" id="mapHint" hidden><span class="live-dot"></span><span id="mapHintText">Tap a state to color it blue, tap again for red, a third time to go back to the forecast.</span></div>
-        <div class="map-top"><div class="legend" id="legend"></div></div>
-        <div class="map-wrap"><svg class="map-svg" id="mapSvg" viewBox="0 0 975 610" role="img" aria-label="United States map"></svg></div>
-        <div class="small-states" id="smallStates"></div>
-      </div>
-      <div class="map-side">
-        <div class="panel" id="buildPanel" hidden></div>
-        <div class="panel" id="kpiPanel"><div class="panel-title" id="mapKpiTitle">At a glance</div><div class="kpi" id="mapKpi"></div></div>
-        <div class="panel" id="closestPanel"><div class="panel-title" id="closestTitle">Closest races</div><div class="closest" id="closest"></div></div>
-      </div>
+
+    <div class="map-box">
+      <svg class="map" id="mapSvg" viewBox="0 0 975 610" role="img" aria-label="Map of the United States"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="small-states" id="smallStates"></div>
     </div>
   </section>
 
-  <section class="block wrap" id="senate">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">35 seats up · 65 held over</div>
-        <h2>Senate, race by race</h2>
-        <p>Democrats hold 34 seats that aren't up this year, Republicans hold 31. Democrats need 17 of the 35 races for a majority; Republicans need 19, since the Vice President breaks ties.</p>
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="panel"><div class="panel-title">The chamber <span class="muted" style="letter-spacing:0;text-transform:none">tap a seat</span></div><svg class="hemi" id="senHemi" viewBox="0 0 600 330"></svg></div>
-      <div class="panel rel"><div class="panel-title">Seat outcomes <span id="senSeatNote" class="muted" style="letter-spacing:0;text-transform:none"></span></div><div id="senHist"></div></div>
-    </div>
-    <div class="panel" style="margin-top:18px">
-      <div class="panel-title">Path to 51 <span class="muted" style="letter-spacing:0;text-transform:none">races ordered from safest Democratic to safest Republican</span></div>
-      <div class="path" id="path51"></div>
-      <div class="path-scale"><span>← Safest Democratic</span><span>Safest Republican →</span></div>
-    </div>
-    <div class="panel" style="margin-top:18px">
-      <div class="panel-title">Every race <span class="muted" style="letter-spacing:0;text-transform:none">set a winner to build your own scenario</span></div>
-      <div class="tbl-wrap"><table class="rtable" id="raceTable"></table></div>
-      <div class="scenario" id="scenario" hidden>
-        <div><div class="s-t">Your scenario</div><div class="s-v" id="scenarioVal">—</div></div>
-        <button class="btn" type="button" id="scenarioReset">Reset to forecast</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="block wrap" id="house">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">All 435 seats</div>
-        <h2>House, district by district</h2>
-        <p>Every district has a Polymarket market. Its price is blended with Kalshi and local polls where they exist, then nudged so the 435 seats add up to the national estimate.</p>
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="panel"><div class="panel-title">The chamber <span class="muted" style="letter-spacing:0;text-transform:none">tap a seat</span></div><svg class="hemi" id="houseHemi" viewBox="0 0 600 330"></svg></div>
-      <div class="panel rel"><div class="panel-title">Seat outcomes <span class="muted" style="letter-spacing:0;text-transform:none">Democratic seats</span></div><div id="houseHist"></div></div>
-    </div>
-    <div class="grid-2" style="margin-top:18px">
-      <div class="panel rel"><div class="panel-title">Generic ballot <span id="gbNow"></span></div><div id="gbChart"></div></div>
-      <div class="panel"><div class="panel-title">Battleground districts <span class="muted" style="letter-spacing:0;text-transform:none">closest by combined odds</span></div><div class="districts" id="battle"></div></div>
+  <section class="block wrap" id="close">
+    <h2>The closest races</h2>
+    <p class="section-note">These could go either way. Tap one for the details.</p>
+    <div class="two-col">
+      <div><h3>Senate</h3><ol class="race-list" id="closeSenate"></ol></div>
+      <div><h3>House</h3><ol class="race-list" id="closeHouse"></ol></div>
     </div>
   </section>
 
   <section class="block wrap" id="trend">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">Over time</div>
-        <h2>How the odds moved</h2>
-        <p>The combined forecast alongside each ingredient. Market lines are daily prices; the polling line reruns the model with only the polls available on each date.</p>
-      </div>
-      <div class="seg" role="group" aria-label="Trend chamber">
-        <button type="button" id="trendHouse" aria-pressed="true">House</button>
-        <button type="button" id="trendSenate" aria-pressed="false">Senate</button>
-      </div>
-    </div>
-    <div class="panel rel"><div id="trendChart"></div><div class="chart-legend" id="trendLegend"></div></div>
-  </section>
-
-  <section class="block wrap" id="polls">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">Latest 45 days</div>
-        <h2>New polls</h2>
-        <p>Every poll feeding the model, newest first. Polls sponsored by a party are marked and count for half.</p>
-      </div>
-    </div>
-    <div class="feed-filters" id="feedFilters"></div>
-    <div class="feed" id="feed"></div>
-  </section>
-
-  <section class="block wrap" id="pollsters">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">Pollster scorecard</div>
-        <h2>Who's polling, and can you trust them?</h2>
-        <p>Every firm feeding the model this cycle. <b>House effect</b> is how far a pollster's results sit from the average of everyone else's polls of the same race at the same time. <b>Track record</b> is how far its final polls missed the real result in 2016–2024, from 538's archive. Both read toward the party the pollster overstated.</p>
-      </div>
-      <input class="search" id="pollsterSearch" type="search" placeholder="Search pollsters" aria-label="Search pollsters">
-    </div>
-    <div class="panel">
-      <div class="tbl-wrap"><table class="rtable ptable" id="pollsterTable"></table></div>
-      <div class="more-wrap"><button type="button" class="btn more" id="pollsterMore" hidden>Show all pollsters</button></div>
-      <div class="note" style="margin-top:12px">House effect is shrunk toward zero for firms with few polls. Ratings: 538's final pollster ratings (2024 edition, CC BY 4.0). Firms founded after 2024 have no rating and get a below-average weight until they build a record.</div>
+    <h2>How the odds have changed</h2>
+    <div class="two-col">
+      <figure class="trend"><figcaption>Democrats' chance of winning the <b>House</b></figcaption><div class="chart-box" id="trendHouse"></div></figure>
+      <figure class="trend"><figcaption>Democrats' chance of winning the <b>Senate</b></figcaption><div class="chart-box" id="trendSenate"></div></figure>
     </div>
   </section>
 
-  <section class="block wrap" id="method">
-    <div class="sec-head">
-      <div>
-        <div class="eyebrow">How it works</div>
-        <h2>How the odds are calculated</h2>
-        <p>Each chamber's headline number is a weighted average of three separate reads on the race: our polling model, Polymarket and Kalshi. Here's the actual arithmetic behind today's numbers.</p>
-      </div>
-    </div>
-    <div class="eq-grid" id="eqGrid"></div>
-    <div class="grid-2" style="margin-top:18px">
-      <div class="panel">
-        <div class="panel-title">The polling model, step by step</div>
-        <ol class="steps">
-          <li><b>Collect every poll.</b> All general-election polls of each Senate race and the national generic ballot, from VoteHub. When a firm publishes likely-voter, registered-voter and all-adult versions of one survey, only the likely-voter version is kept.</li>
-          <li><b>Weight each poll.</b> Newer polls count more (a poll's weight halves every 3 weeks in Senate races, 2 weeks nationally). Bigger samples count more. Likely voters beat registered voters, who beat all adults. A 3-star pollster counts about twice as much as a half-star one. Repeat polls from the same firm count less so no firm can flood the average.</li>
-          <li><b>Correct for sponsors.</b> Polls paid for by a party or allied group count half and are shifted 2 points against the sponsor, because sponsored polls tend to flatter their side.</li>
-          <li><b>Average.</b> The weighted polls give each race a margin, such as <span id="exampleAvg">a 3-point lead</span>.</li>
-          <li><b>Add a baseline.</b> Each state also gets a starting guess: its 2024 presidential result, shifted by how much the national generic ballot has moved since 2024, plus about 2.5 points for an incumbent. With lots of polls the baseline barely matters; with none, it's all we have.</li>
-          <li><b>Turn the margin into odds.</b> Polls miss. State polls have historically been off by 4–5 points, and more when the election is weeks away, so a 3-point lead works out to roughly a 70% chance, not a sure thing.</li>
-          <li><b>Simulate the chamber.</b> The Senate is played out 20,000 times. Each run draws one national polling error shared by every race (misses tend to go the same direction everywhere) plus a smaller error for each state. The polling model's Senate number is the share of runs Democrats win. For the House, the generic-ballot average converts to seats at about 4.5 seats per point.</li>
-        </ol>
-      </div>
-      <div class="panel why">
-        <div class="panel-title">Why blend polls with markets?</div>
-        <p><b>Polls measure voters directly</b> and show their work, which is why they get half the weight. But they're snapshots with shared blind spots. In 2016 and 2020 most polls underestimated Republicans by several points at once.</p>
-        <p><b>Markets react in minutes</b> to debates, scandals, early-vote data and anything else traders think the polls are missing, and people bet real money on being right. But a few large traders can move a thin market, and long shots tend to trade above their real odds.</p>
-        <p><b>Averaging the two cancels part of each one's errors</b>, the same reason forecasters average many polls instead of trusting one.</p>
-        <h3>Why 50 / 25 / 25?</h3>
-        <p>The polls get half because they're the only direct measurement of voters. Markets share the other half equally: Kalshi is a U.S.-regulated exchange, Polymarket a global crypto market, and they draw different traders. Neither has a clearly better record, so neither dominates. If a source has no market for a race, its weight moves to the others.</p>
-        <h3>When the sources disagree</h3>
-        <p>That gap is information. <span id="disagree">Some races have polls and traders far apart.</span> The combined number splits the difference, and every race card shows each source so you can judge for yourself.</p>
-      </div>
-    </div>
-    <div class="panel" style="margin-top:18px">
-      <div class="panel-title">Weighting</div>
-      <div class="weights" id="weights"></div>
-      <div class="method">
-        <div>
-          <h3>Who paid for the poll, and can you trust it?</h3>
-          <p>Every poll is tagged by sponsor: <span class="bdg sR">R-backed</span> <span class="bdg sD">D-backed</span> or <span class="bdg">Nonpartisan</span>, plus <span class="bdg sI">Internal</span> for campaign polls. Sponsored polls count half and get a 2-point correction.</p>
-          <p>Trust ratings come from 538's final pollster ratings (2024 edition, 0.5–3 stars): <span class="bdg t-hi">Top-rated</span> 2.5+, <span class="bdg t-ok">Solid</span> 1.8+, <span class="bdg t-mid">Mixed</span> 1.0+, <span class="bdg t-lo">Low-rated</span> below 1, or <span class="bdg t-un">Unrated</span> for newer firms. A 3-star pollster counts almost twice as much as a half-star one.</p>
-        </div>
-        <div>
-          <h3>Prediction markets</h3>
-          <p>Polymarket and Kalshi prices are read as probabilities using the bid/ask midpoint when the spread is tight, and the last trade otherwise. Prices are normalised so each race sums to 100%. Polymarket refreshes live in your browser every minute.</p>
-          <p>Markets carry fees and a mild long-shot bias, so very small probabilities tend to be overstated.</p>
-        </div>
-        <div>
-          <h3>Fine print</h3>
-          <ul>
-            <li>Independents (Osborn, Bodnar, Achilles, Bengs) count as non-Republican seats. If they end up deciding control, it's scored as a coin flip.</li>
-            <li>House district odds are Polymarket district prices blended with Kalshi and local polls, then shifted together so the 435 seats add up to the national estimate.</li>
-            <li id="refreshNote">Polls and Kalshi refresh on the server every 30 minutes; Polymarket prices refresh in your browser every minute.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+  <section class="block wrap" id="how">
+    <h2>Where these numbers come from</h2>
+    <p class="section-note">We average three sources. Polls count for half. Two betting markets, where people bet real money on the outcome, split the other half.</p>
+    <div class="sources" id="sources"></div>
+    <div class="math" id="math"></div>
+
+    <details class="more">
+      <summary>How we read the polls</summary>
+      <ol class="steps">
+        <li>We collect every public poll from <a href="https://votehub.com/polls/" target="_blank" rel="noopener">VoteHub</a>.</li>
+        <li>Newer polls, bigger polls and polls of likely voters count more.</li>
+        <li>Pollsters with a strong track record count more. Ratings come from 538's last pollster ratings.</li>
+        <li>Polls paid for by a party count half as much, and we adjust them slightly against that party.</li>
+        <li>We average the polls in each race, then account for how far off polls usually are. A 3-point lead is about a 70% chance, not a sure thing.</li>
+        <li>For the Senate, we play out the election 20,000 times. Polling misses tend to go the same way everywhere, so the simulation includes that.</li>
+      </ol>
+    </details>
+    <details class="more" id="pollsterDetails">
+      <summary>Which pollsters can you trust?</summary>
+      <p class="section-note">Rating is from 538's 2024 pollster ratings. "Usually leans" compares each pollster's 2026 results with other polls of the same races.</p>
+      <div class="table-scroll"><table class="simple-table" id="pollsterTable"></table></div>
+      <button type="button" class="btn" id="pollsterMore">Show all pollsters</button>
+    </details>
+    <details class="more" id="feedDetails">
+      <summary>Every poll from the last 45 days</summary>
+      <div class="table-scroll"><table class="simple-table" id="feedTable"></table></div>
+    </details>
+    <details class="more">
+      <summary>Sources and fine print</summary>
+      <ul class="fine">
+        <li>Polls: VoteHub. Betting markets: Polymarket and Kalshi. Pollster ratings: 538 (2024). Photos: Wikipedia and the U.S. Congress.</li>
+        <li>House district odds come from Polymarket's market for each district, adjusted so all 435 seats add up to the national forecast.</li>
+        <li>Independent Senate candidates are counted with Democrats in the seat totals. If independents end up deciding control, we count it as a coin flip.</li>
+        <li id="refreshNote">Polls refresh several times a day.</li>
+        <li>Not affiliated with any of these sources. Betting odds are not financial advice.</li>
+      </ul>
+    </details>
   </section>
 </main>
 
-<footer>
-  <div class="wrap">
-    <div>Polls: <a href="https://votehub.com/polls/" target="_blank" rel="noopener">VoteHub</a> · Markets: <a href="https://polymarket.com/elections" target="_blank" rel="noopener">Polymarket</a>, <a href="https://kalshi.com/category/elections" target="_blank" rel="noopener">Kalshi</a> · Map: U.S. Census via us-atlas · Members: unitedstates/congress-legislators. Not affiliated with any of them. Market prices are not financial advice.</div>
-    <div id="updatedFoot">—</div>
-    <details><summary>Photo credits</summary><div class="note">Candidate photos come from Wikipedia/Wikimedia Commons (various free licenses; follow each link for author and license) and the U.S. Congress Bioguide (public domain). Candidates without a free photo show initials.</div><div class="credits" id="credits"></div></details>
-  </div>
-</footer>
+<footer class="site-foot"><div class="wrap" id="foot"></div></footer>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawerName" role="dialog">
-  <div class="drawer-head">
-    <div class="drawer-abbr" id="drawerAbbr">—</div>
-    <div><div class="drawer-name" id="drawerName">—</div><div class="drawer-meta" id="drawerMeta"></div></div>
-    <button class="icon-btn" type="button" id="drawerClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-hidden="true">
+  <div class="panel-head">
+    <h2 id="panelTitle">State</h2>
+    <button type="button" class="btn close-btn" id="panelClose">Close ✕</button>
   </div>
-  <div class="drawer-body" id="drawerBody"></div>
+  <div class="panel-body" id="panelBody"></div>
 </aside>
-<div class="tooltip" id="tooltip" hidden></div>
+<div class="tip" id="tip" hidden></div>
 
 <script src="app.js" defer></script>
 </body>

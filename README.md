@@ -6,12 +6,12 @@ A live forecast for the 2026 U.S. House and Senate. It combines every public pol
 
 ## What's on the page
 
-- **Headline odds** for each chamber, with the arithmetic shown: 50% polling model, 25% Polymarket, 25% Kalshi.
-- **The map.** A Senate map by state, plus a hex map with one hexagon per House district. Click anything for candidates (with photos), every poll, market odds and the combined estimate.
-- **Build your map.** Set states or districts blue or red and the page re-simulates who wins the majority.
-- **Every poll**, tagged as R-backed, D-backed or nonpartisan, with the pollster's 538 rating.
-- **Pollster scorecard.** Each firm's 538 rating, its house effect this cycle (how far it runs from other polls of the same race) and its 2016–2024 track record.
-- **Trend charts** for the combined forecast, polls, Polymarket and Kalshi, plus the generic ballot.
+Written for someone who doesn't follow polling closely:
+
+- **The answer first.** One plain sentence and one big number per chamber ("Democrats are very likely to win the House, 94%"), plus a seat bar showing how close each side is to a majority.
+- **The map.** Tap a state, or pick it from a list, to see its Senate race and House seats: candidate photos, who's favored, the polling average and every poll. Each poll is labeled by who paid for it and how reliable the pollster is.
+- **Make your own prediction.** Tap states to color them blue or red and see who would win the majority.
+- **The closest races**, **how the odds have changed**, and a short **where these numbers come from** section with the arithmetic. Pollster ratings and every recent poll are tucked into "read more" sections.
 
 ## How the data stays fresh
 
