@@ -851,6 +851,7 @@
   }
   function bindClosest() {
     $("#close").addEventListener("click", (e) => { const b = e.target.closest("[data-st]"); if (b) openPanel(b.dataset.st, b.dataset.d); });
+    $("#split").addEventListener("click", (e) => { const b = e.target.closest("[data-st]"); if (b) openPanel(b.dataset.st, b.dataset.d); });
   }
 
   // ---------- how it works ----------
@@ -890,8 +891,31 @@
     $("#feedTable").innerHTML = `<thead><tr><th>Date</th><th>Race</th><th>Pollster</th><th>Result</th><th>Notes</th></tr></thead><tbody>${rows}</tbody>`;
   }
 
+
+  // ---------- polls vs bettors ----------
+  function renderSplit() {
+    const mean = (a, b) => (a != null && b != null ? (a + b) / 2 : a ?? b);
+    const row = ({ st, id, where, name, P, poll, mkt }) => {
+      const gap = poll - mkt, who = lastName(name), more = gap > 0 ? "Polls" : "Bettors";
+      const bar = (label, v) => `<span>${label}</span><span class="track"><i style="width:${v * 100}%;background:${color(P)}"></i></span><b style="color:${color(P)}">${pctShort(v)}</b>`;
+      return `<li><button type="button" data-st="${st}"${id ? ` data-d="${id}"` : ""}><span class="where">${esc(where)}</span><span class="who">${esc(name)} (${PARTY[P]})</span><span class="odds" style="color:var(--ink)">${Math.round(Math.abs(gap) * 100)} pts<small>apart</small></span>
+        <span class="gap-bars">${bar("Polls", poll)}${bar("Bettors", mkt)}</span>
+        <span class="gap-say">${more} are more hopeful about ${esc(who)}'s chances.</span></button></li>`;
+    };
+    const sen = S.L.races.filter((r) => r.pm || r.k).map((r) => {
+      const A = r.altParty, alt = r.c.find((c) => c.party === A), pm = S.live.race[r.st] || r.pm;
+      return { st: r.st, where: r.name + " Senate", name: alt.name, P: A, poll: r.poll[A], mkt: mean(pm?.[A], r.k?.[A]) };
+    }).filter((x) => x.mkt != null && Math.abs(x.poll - x.mkt) >= 0.08).sort((a, b) => Math.abs(b.poll - b.mkt) - Math.abs(a.poll - a.mkt)).slice(0, 6);
+    const house = S.L.districts.filter((d) => !d.sameParty && d.modelD != null).map((d) => {
+      const dc = d.c.find((c) => c.party === "D");
+      return { st: d.st, id: d.id, where: `${STATE_NAMES[d.st]}, District ${d.n || "at-large"}`, name: dc ? dc.name : "Democratic nominee", P: "D", poll: d.modelD, mkt: mean(d.pmD, d.kD) };
+    }).filter((x) => x.mkt != null && x.mkt > 0.05 && x.mkt < 0.95 && Math.abs(x.poll - x.mkt) >= 0.12).sort((a, b) => Math.abs(b.poll - b.mkt) - Math.abs(a.poll - a.mkt)).slice(0, 6);
+    $("#splitSenate").innerHTML = sen.map(row).join("") || '<li class="muted">Polls and bettors broadly agree on every Senate race right now.</li>';
+    $("#splitHouse").innerHTML = house.map(row).join("") || '<li class="muted">Polls and bettors broadly agree on the competitive House races right now.</li>';
+  }
+
   function renderAll() {
-    renderIntro(); renderCards(); renderMap(); renderClosest(); renderHow();
+    renderIntro(); renderCards(); renderMap(); renderClosest(); renderSplit(); renderHow();
     trendChart($("#trendHouse"), S.H.house.combined);
     trendChart($("#trendSenate"), S.H.senate.combined);
   }

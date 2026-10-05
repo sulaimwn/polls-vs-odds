@@ -317,3 +317,11 @@ h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px; }
 .map .borders { fill: none; stroke: var(--bg); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
 .map .nation { fill: none; stroke: var(--ink-3); stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: none; opacity: .5; }
 .map .dlbl { font-family: var(--font); font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; paint-order: stroke; stroke-linejoin: round; }
+
+/* polls vs bettors */
+.gap-list .gap-bars { grid-column: 1 / -1; display: grid; grid-template-columns: 76px minmax(0, 1fr) 44px; gap: 6px 10px; align-items: center; font-size: 14px; margin-top: 4px; }
+.gap-list .gap-bars .track { height: 10px; border-radius: 99px; background: var(--bg-soft); position: relative; overflow: hidden; }
+.gap-list .gap-bars .track i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; }
+.gap-list .gap-bars .track::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink-3); }
+.gap-list .gap-bars b { text-align: right; font-variant-numeric: tabular-nums; }
+.gap-list .gap-say { grid-column: 1 / -1; font-size: 15px; color: var(--ink-2); margin-top: 4px; }
