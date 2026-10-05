@@ -2,7 +2,7 @@
 
 A live forecast for the 2026 U.S. House and Senate. It combines every public poll with prices from Polymarket and Kalshi into one number per chamber, then lets you click into any state, Senate race or House district.
 
-**Live site:** https://sulaimwn.github.io/midterm-control-room/
+**Hosting:** this repo is private, so the site is shared as a Claude Artifact (`npm run build:artifact` packages it). To host it on GitHub Pages instead, make the repo public (or use GitHub Pro), copy `deploy/github-pages-workflow.yml` to `.github/workflows/refresh.yml`, and set Pages to deploy from GitHub Actions.
 
 ## What's on the page
 
@@ -24,7 +24,7 @@ A live forecast for the 2026 U.S. House and Senate. It combines every public pol
 | [congress-legislators](https://github.com/unitedstates/congress-legislators) | Incumbents | every run |
 | Wikipedia / Congress Bioguide | Candidate photos | cached in `img/c/` |
 
-`.github/workflows/refresh.yml` runs `scripts/update.mjs` on a schedule and deploys to GitHub Pages.
+`deploy/github-pages-workflow.yml` is a ready-made GitHub Actions workflow that runs `scripts/update.mjs` every 30 minutes and deploys to GitHub Pages.
 
 ## Run it locally
 
@@ -33,6 +33,7 @@ npm install
 npm run update      # pull polls + markets, run the model, write data/*.json and og.png
 npm run photos      # fetch photos for any new candidates
 npm run serve       # http://localhost:8080
+npm run build:artifact  # self-contained copy in dist-artifact/ (photos inlined) for sharing as a Claude Artifact
 ```
 
 ## Files

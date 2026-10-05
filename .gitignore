@@ -2,3 +2,4 @@ node_modules/
 .claude/
 _site/
 *.log
+dist-artifact/

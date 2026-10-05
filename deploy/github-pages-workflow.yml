@@ -1,0 +1,54 @@
+name: Refresh data and deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/30 * * * *" # polls + Kalshi every 30 minutes (Polymarket is also live in the browser)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Refresh member list (incumbents, photos)
+        run: curl -sf -o scripts/legislators-current.json https://unitedstates.github.io/congress-legislators/legislators-current.json || true
+      - name: Fetch photos for any new candidates
+        run: node scripts/photos.mjs || true
+      - name: Pull polls and markets, run the model
+        run: node scripts/update.mjs
+      - name: Render link preview
+        run: node scripts/og.mjs
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r index.html app.js styles.css og.png data img _site/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
