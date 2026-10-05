@@ -359,6 +359,12 @@ const houseExpected = { polls: housePoll.mean, polymarket: mean(pmSeatDistD, D_L
 houseExpected.combined = mean(combinedSeatDist, D_LO);
 
 // ---------- HOUSE districts ----------
+// 2024 presidential margin (D minus R) for every district as drawn for 2026, calculated by The Downballot.
+const PRES24 = {};
+for (const line of fs.readFileSync(new URL("config/pres2024-by-district-2026-lines.csv", root), "utf8").split(/\r?\n/)) {
+  const c = line.split(","); if (/^[A-Z]{2}-(\d\d|AL)$/.test(c[0]) && c[5] !== "" && !isNaN(+c[5])) PRES24[c[0]] = +c[5];
+}
+const NAT24 = -1.5; // 2024 national popular vote margin
 console.log("Building House districts…");
 const distEvents = {};
 for (const e of pmEvents) {
@@ -437,13 +443,22 @@ for (const [key, ev] of Object.entries(distEvents)) {
     if (sw) { pollMargin = sm / sw; pollD = Phi(pollMargin / Math.sqrt(6 ** 2 + 3.5 ** 2 / sw)); }
     pollList = usable.sort((a, b) => b.end_date.localeCompare(a.end_date)).slice(0, 12).map((p) => ({ date: p.end_date, pollster: p.pollster, pop: p.population, n: p.sample_size, url: p.url, ...pollMeta(p), d: p.answers.find((a) => lastName(a.choice) === lastName(dc.name)).pct, r: p.answers.find((a) => lastName(a.choice) === lastName(rc.name)).pct }));
   }
-  const mkt = kD != null ? (pmD + kD) / 2 : pmD;
-  const rawD = pollD != null ? 0.65 * mkt + 0.35 * pollD : mkt;
+  // Polling model: district's 2024 lean + national swing since 2024 + incumbency, combined with any local polls
+  let modelD = null, modelMargin = null, baseMargin = null;
+  if (PRES24[key] != null) {
+    const incD = cands.some((c) => c.party === "D" && c.inc), incR = cands.some((c) => c.party === "R" && c.inc);
+    baseMargin = PRES24[key] + 0.9 * (GB.margin - NAT24) + (incD ? 2.5 : 0) - (incR ? 2.5 : 0);
+    let m = baseMargin, sd = 7;
+    if (pollMargin != null) { const wB = 1 / 7 ** 2, wP = 1 / (5 ** 2); m = (baseMargin * wB + pollMargin * wP) / (wB + wP); sd = Math.sqrt(1 / (wB + wP)); }
+    modelMargin = m;
+    modelD = Phi(m / Math.sqrt(sd ** 2 + 3 ** 2));
+  } else if (pollD != null) modelD = pollD;
+  const rawD = blend(modelD, pmD, kD);
   const inc = current.find((m) => m.type === "rep" && m.state === st && (m.district === +dn || (dn === "AL" && m.district === 0)));
   districts.push({
     id: key, st, n: dn === "AL" ? 0 : +dn,
     c: cands.sort((a, b) => b.pm - a.pm).slice(0, 3).map((c) => ({ name: c.name, party: c.party, pm: round(c.pm), k: c.k != null ? round(c.k) : undefined, d1: round(c.d1), inc: c.inc || undefined, generic: c.generic || undefined, img: c.generic ? null : photoFor(c.name, st) })),
-    pmD: round(pmD), kD: round(kD), pollD: round(pollD), pollMargin: round(pollMargin, 1), polls: pollList.length ? pollList : undefined,
+    pmD: round(pmD), kD: round(kD), pollD: round(pollD), modelD: round(modelD), modelMargin: round(modelMargin, 1), pres24: PRES24[key], pollMargin: round(pollMargin, 1), polls: pollList.length ? pollList : undefined,
     rawD, sameParty, vol: Math.round(ev.main?.volume || ev.ind?.volume || 0), slug: (ev.main || ev.ind).slug,
     held: inc?.party || null, holder: inc?.full || null,
   });

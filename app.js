@@ -708,6 +708,8 @@
     const dc = d.c.find((c) => c.party === "D"), rc = d.c.find((c) => c.party === "R");
     return `<div class="detail"><div class="faceoff">${cs.map((c) => `<div class="person">${photo(c)}<div class="name">${esc(c.name)}</div><div class="meta">${PARTY[c.party] || "Other"}${c.inc ? " · Current member" : ""}</div><div class="pct" style="color:${color(c.party)}">${pctShort(pOf(c))}<small>chance to win</small></div></div>`).join("")}</div>
       ${d.sameParty ? "" : `<div class="facts">
+        ${d.modelD != null ? `<div><span class="k">Polls and past results give the Democrat</span><span class="v">${pctShort(d.modelD)}</span></div>` : ""}
+        ${d.pres24 != null ? `<div><span class="k">How this district voted for president in 2024</span><span class="v">${Math.abs(d.pres24) < 0.5 ? "Even" : `${d.pres24 > 0 ? "Harris" : "Trump"} by ${Math.abs(d.pres24)}`}</span></div>` : ""}
         <div><span class="k">Betting on Polymarket gives the Democrat</span><span class="v">${pctShort(d.pmD)}</span></div>
         ${d.kD != null ? `<div><span class="k">Betting on Kalshi gives the Democrat</span><span class="v">${pctShort(d.kD)}</span></div>` : ""}
         ${d.pollMargin != null ? `<div><span class="k">Local polls</span><span class="v">${Math.abs(d.pollMargin) < 0.5 ? "Tied" : `${d.pollMargin > 0 ? "Democrat" : "Republican"} ahead by ${Math.abs(d.pollMargin).toFixed(1)}`}</span></div>` : ""}
