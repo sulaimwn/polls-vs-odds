@@ -1,0 +1,10 @@
+{
+  "_note": "Manual fixes for matching VoteHub pollster names to 538's 2024 pollster ratings. null = no rating (avoid a wrong fuzzy match).",
+  "American Pulse Research & Polling": null,
+  "Texas Public Opinion Research": null,
+  "Manhattan Institute": null,
+  "Pan Atlantic SMS Group": "Pan Atlantic Research",
+  "HarrisX/Harris": "Harris Insights & Analytics",
+  "HarrisX": "Harris Insights & Analytics",
+  "HarrisX/Harris Poll": "Harris Insights & Analytics"
+}
