@@ -17,9 +17,9 @@ A live forecast for the 2026 U.S. House and Senate. It combines every public pol
 
 | Source | What | Refresh |
 |---|---|---|
-| [VoteHub](https://votehub.com/polls/) | Generic ballot, Senate and House polls | every 30 min (GitHub Actions) |
-| [Kalshi](https://kalshi.com) | Chamber control, Senate races, seat counts | every 30 min (GitHub Actions) |
-| [Polymarket](https://polymarket.com) | Chamber control, all 35 Senate races, all 435 districts | every 30 min, plus live in the browser every minute |
+| [VoteHub](https://votehub.com/polls/) | Generic ballot, Senate and House polls | each refresh run |
+| [Kalshi](https://kalshi.com) | Chamber control, Senate races, seat counts | each refresh run |
+| [Polymarket](https://polymarket.com) | Chamber control, all 35 Senate races, all 435 districts | each refresh run, plus live in the browser on hosted copies |
 | [538 pollster ratings](https://github.com/fivethirtyeight/data/tree/master/pollster-ratings) | Ratings and 2016–2024 accuracy | static (final 2024 edition) |
 | [congress-legislators](https://github.com/unitedstates/congress-legislators) | Incumbents | every run |
 | Wikipedia / Congress Bioguide | Candidate photos | cached in `img/c/` |

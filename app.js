@@ -12,6 +12,7 @@
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const DAY = 86400;
+  const STATIC = !!window.CR_STATIC; // snapshot copy (e.g. a Claude Artifact) where live market calls are blocked
 
   const pct = (p, d = 0) => {
     if (p == null || Number.isNaN(p)) return "—";
@@ -308,10 +309,12 @@
     const days = Math.max(0, Math.ceil((Date.parse("2026-11-03T05:00:00Z") - Date.now()) / 86400e3));
     $("#countdown").textContent = days > 0 ? `${days} days to Election Day · Nov 3` : "Election Day · Nov 3";
     updateLivePill();
-    $("#updatedFoot").textContent = `Polls & Kalshi last refreshed ${new Date(S.L.updated).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}. Polymarket prices update live in your browser.`;
+    const when = new Date(S.L.updated).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+    $("#updatedFoot").textContent = STATIC ? `Data snapshot from ${when}: polls, Polymarket and Kalshi as of that moment.` : `Polls & Kalshi last refreshed ${when}. Polymarket prices update live in your browser.`;
   }
   function updateLivePill() {
     const pill = $("#livePill"), txt = $("#liveText");
+    if (STATIC) { pill.classList.add("stale"); txt.textContent = S.L ? `Snapshot · ${ago(S.L.updated)}` : "Loading"; pill.title = "A saved snapshot of polls and market prices. The full site updates live."; return; }
     if (S.live.at && Date.now() - S.live.at < 180e3) { pill.classList.remove("stale"); txt.textContent = `Live · ${ago(new Date(S.live.at).toISOString())}`; }
     else { pill.classList.add("stale"); txt.textContent = S.L ? `Updated ${ago(S.L.updated)}` : "Connecting"; }
   }
@@ -561,7 +564,7 @@
     try { history.replaceState(null, "", "#" + st); } catch {}
     $$("#mapSvg .st, #mapSvg .hx").forEach((p) => p.classList.toggle("sel", p.dataset.st === st && (!p.dataset.d || p.dataset.d === focusId)));
     const race = raceBy(st);
-    if (race) livePollRace(race);
+    if (race && !STATIC) livePollRace(race);
   }
   function closeDrawer() {
     S.open = null; S.focusD = null;
@@ -953,6 +956,8 @@
   }
   function renderMethod() {
     const W = S.L.weights;
+    const rn = $("#refreshNote");
+    if (rn) rn.textContent = STATIC ? `This copy is a snapshot taken ${new Date(S.L.updated).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}. It's republished with fresh polls and prices on each refresh.` : "Polls and Kalshi refresh on the server every 30 minutes; Polymarket prices refresh in your browser every minute.";
     $("#weights").innerHTML = `<div style="flex:${W.polls};background:${SRC_COLORS.polls}">Polls ${Math.round(W.polls * 100)}%</div><div style="flex:${W.polymarket};background:${SRC_COLORS.polymarket}">Polymarket ${Math.round(W.polymarket * 100)}%</div><div style="flex:${W.kalshi};background:${SRC_COLORS.kalshi}">Kalshi ${Math.round(W.kalshi * 100)}%</div>`;
   }
   async function renderCredits() {
@@ -1069,9 +1074,11 @@
     addEventListener("resize", () => { if (Math.abs(innerWidth - lastW) < 20) return; lastW = innerWidth; clearTimeout(rt); rt = setTimeout(() => { renderSenate(); renderHouse(); renderTrend(); if (S.open) { const r = raceBy(S.open); if (r) drawRaceCharts(r); } }, 180); });
     const hash = location.hash.slice(1).toUpperCase();
     if (STATE_NAMES[hash]) setTimeout(() => openState(hash), 300);
-    livePollChambers();
-    setInterval(livePollChambers, 60e3);
-    setInterval(() => { if (S.open) { const r = raceBy(S.open); if (r) livePollRace(r); } }, 60e3);
+    if (!STATIC) {
+      livePollChambers();
+      setInterval(livePollChambers, 60e3);
+      setInterval(() => { if (S.open) { const r = raceBy(S.open); if (r) livePollRace(r); } }, 60e3);
+    }
     setInterval(refreshSnapshot, 5 * 60e3);
     setInterval(updateLivePill, 15e3);
   }
