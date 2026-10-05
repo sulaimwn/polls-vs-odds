@@ -49,7 +49,7 @@
   const split = (pL, colL, pR, colR) => `<div class="split"><i style="width:${pL * 100}%;background:${colL}"></i><i style="width:${Math.max(0, 1 - pL - pR) * 100}%;background:var(--toss)"></i><i style="width:${pR * 100}%;background:${colR}"></i></div>`;
 
   // ---------- state ----------
-  const S = { L: null, H: null, G: null, D: null, region: null, mode: "house", build: false, pick: { senate: {}, house: {} }, live: { house: null, senate: null, race: {} }, open: null, focusD: null, allPolls: false, allDistricts: false, lastFocus: null, allPollsters: false };
+  const S = { L: null, H: null, G: null, D: null, region: null, mode: "house", src: "combined", build: false, pick: { senate: {}, house: {} }, live: { house: null, senate: null, race: {} }, open: null, focusD: null, allPolls: false, allDistricts: false, lastFocus: null, allPollsters: false };
   const raceBy = (st) => S.L.races.find((r) => r.st === st);
   const distsOf = (st) => S.L.districts.filter((d) => d.st === st);
   const distBy = (id) => S.L.districts.find((d) => d.id === id);
@@ -70,6 +70,33 @@
   function chamber(name) {
     const c = S.L[name], pm = S.live[name] ?? c.sources.polymarket;
     return { pD: blend(c.sources.polls, pm, c.sources.kalshi), polls: c.sources.polls, pm, kalshi: c.sources.kalshi };
+  }
+
+  // ---------- which source the map uses: combined (default), polls only, or odds only ----------
+  const SRC_LABEL = { combined: "Combined", polls: "Polls only", markets: "Odds only" };
+  const avg2 = (a, b) => (a != null && b != null ? (a + b) / 2 : a ?? b);
+  function srcRace(r) {
+    if (S.src === "polls") return r.poll;
+    if (S.src === "markets") {
+      const pm = S.live.race[r.st] || r.pm, k = r.k;
+      if (!pm && !k) return r.poll;
+      const o = {};
+      for (const P of ["D", "R", "I"]) o[P] = avg2(pm?.[P], k?.[P]) ?? 0;
+      const t = o.D + o.R + o.I || 1;
+      for (const P in o) o[P] /= t;
+      return o;
+    }
+    return raceP(r);
+  }
+  function srcDist(d) {
+    if (d.sameParty) return d.p;
+    if (S.src === "polls") return d.modelD ?? d.pollD ?? d.p;
+    if (S.src === "markets") return avg2(d.pmD, d.kD) ?? d.p;
+    return d.p;
+  }
+  function srcChamber(name) {
+    const c = chamber(name);
+    return S.src === "polls" ? c.polls : S.src === "markets" ? avg2(c.pm, c.kalshi) : c.pD;
   }
 
   // ---------- simulations (same model as scripts/update.mjs) ----------
@@ -93,7 +120,7 @@
   function simulateSenate(picks = {}, N = 12000) {
     const races = S.L.races, nu = S.L.senate.notUp, { u, n } = rng(2026);
     const SD = 6, NAT = 3.5, LOC = Math.sqrt(SD * SD - NAT * NAT);
-    const probs = races.map(raceP);
+    const probs = races.map(srcRace);
     const z = probs.map((p) => SD * phiInv(clamp(1 - p.R, 0.0005, 0.9995)));
     const share = probs.map((p) => (p.D + p.I > 0 ? p.D / (p.D + p.I) : 1));
     let dc = 0, seats = 0;
@@ -113,7 +140,7 @@
   function simulateHouse(picks = {}, N = 3000) {
     const ds = S.L.districts, { n } = rng(435);
     const SD = 7, NAT = 2, LOC = Math.sqrt(SD * SD - NAT * NAT);
-    const z = ds.map((d) => SD * phiInv(d.p));
+    const z = ds.map((d) => SD * phiInv(srcDist(d)));
     const fixed = ds.map((d) => (picks[d.id] ? (picks[d.id] === "D" ? 1 : 0) : d.sameParty ? (d.p > 0.5 ? 1 : 0) : -1));
     let ctl = 0, seats = 0;
     for (let k = 0; k < N; k++) {
@@ -204,14 +231,14 @@
     if (!race) return null;
     const pk = S.build && S.mode === "senate" ? S.pick.senate[st] : null;
     if (pk) return { fill: color(pk), picked: true, light: false, key: pk + "1" };
-    const p = raceP(race), rt = rating(p.D, p.R, p.I);
+    const p = srcRace(race), rt = rating(p.D, p.R, p.I);
     return { fill: rt.fill, light: rt.light, key: rt.tier ? (rt.lead === "I" ? "D" : rt.lead) + rt.tier : "T" };
   }
   function districtFill(d) {
     const pk = S.build && S.mode === "house" ? S.pick.house[d.id] : null;
     if (pk) return { fill: color(pk), picked: true, light: false, key: pk + "1" };
     if (d.sameParty) { const P = d.p > 0.5 ? "D" : "R"; return { fill: color(P), light: false, key: P + "1" }; }
-    const rt = rating(d.p, 1 - d.p);
+    const q = srcDist(d), rt = rating(q, 1 - q);
     return { fill: rt.fill, light: rt.light, key: rt.tier ? rt.lead + rt.tier : "T" };
   }
   function renderMap() {
@@ -243,7 +270,15 @@
   }
 
   // seat tally by forecast category, like a newspaper results bar
+  function renderSrcSay() {
+    const ch = S.mode === "house" ? "House" : "Senate", p = srcChamber(S.mode);
+    if (p == null) { $("#srcSay").textContent = ""; return; }
+    const lead = p >= 0.5 ? "D" : "R", pl = Math.max(p, 1 - p);
+    const what = { combined: "Polls and betting odds combined", polls: "Polls only", markets: "Betting odds only (Polymarket and Kalshi)" }[S.src];
+    $("#srcSay").innerHTML = `<b>${what}:</b> ${PARTIES[lead]} have ${aChance(pl)} of winning the ${ch}.`;
+  }
   function renderRatingBar() {
+    renderSrcSay();
     const keys = ["D1", "D2", "D3", "T", "R3", "R2", "R1"], n = Object.fromEntries(keys.map((k) => [k, 0]));
     let total, need;
     if (S.mode === "house") { for (const d of S.L.districts) n[districtFill(d).key]++; total = 435; need = 218; }
@@ -367,14 +402,15 @@
 
   function tipHTML(st, did) {
     if (did) {
-      const d = distBy(did), rt = rating(d.p, 1 - d.p);
-      const rows = d.c.slice(0, 2).map((c) => `<div class="row"><span>${esc(c.name)} (${c.party})${c.inc ? " *" : ""}</span><b style="color:${color(c.party)}">${pctShort(d.sameParty ? c.pm : c.party === "D" ? d.p : c.party === "R" ? 1 - d.p : c.pm)}</b></div>`).join("");
-      return `<b>${esc(STATE_NAMES[d.st])}, ${d.n ? `District ${d.n}` : "at-large"}</b>${rows}<div class="hint">${d.sameParty ? "Both candidates from the same party" : rt.label}${d.c.some((c) => c.inc) ? " · * current member" : ""}</div><div class="hint">${S.build ? "Tap to change your pick" : "Tap for details"}</div>`;
+      const d = distBy(did), q = srcDist(d), rt = rating(q, 1 - q);
+      const rows = d.c.slice(0, 2).map((c) => `<div class="row"><span>${esc(c.name)} (${c.party})${c.inc ? " *" : ""}</span><b style="color:${color(c.party)}">${pctShort(d.sameParty ? c.pm : c.party === "D" ? q : c.party === "R" ? 1 - q : c.pm)}</b></div>`).join("");
+      return `<b>${esc(STATE_NAMES[d.st])}, ${d.n ? `District ${d.n}` : "at-large"}</b>${rows}<div class="hint">${d.sameParty ? "Both candidates from the same party" : rt.label}${d.c.some((c) => c.inc) ? " · * current member" : ""}</div>${S.src !== "combined" ? `<div class="hint">${SRC_LABEL[S.src]}</div>` : ""}<div class="hint">${S.build ? "Tap to change your pick" : "Tap for details"}</div>`;
     }
     let h = `<b>${esc(STATE_NAMES[st])}</b>`;
     const race = raceBy(st);
     if (!race) return h + `<div class="hint">No Senate race this year</div>`;
-    const p = raceP(race);
+    const p = srcRace(race);
+    if (S.src !== "combined") h += `<div class="hint">${SRC_LABEL[S.src]}</div>`;
     h += race.c.filter((c) => p[c.party] >= 0.01).map((c) => `<div class="row"><span>${esc(c.name)} (${c.party})</span><b style="color:${color(c.party)}">${pctShort(p[c.party])}</b></div>`).join("");
     return h + `<div class="hint">${S.build ? "Tap to change your pick" : "Tap for details"}</div>`;
   }
@@ -402,6 +438,7 @@
     $("#statePick").innerHTML = '<option value="">Choose a state from a list…</option>' + Object.entries(STATE_NAMES).sort((a, b) => a[1].localeCompare(b[1])).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
     $("#statePick").addEventListener("change", (e) => { const st = e.target.value; if (st) { clearRegion(); zoomToBox(stateBox(st)); openPanel(st); e.target.value = ""; } });
     $("#tabSenate").onclick = () => setMode("senate");
+    $$("[data-src]").forEach((b) => (b.onclick = () => { S.src = b.dataset.src; $$("[data-src]").forEach((x) => x.setAttribute("aria-pressed", x === b)); renderMap(); }));
     $("#tabHouse").onclick = () => setMode("house");
     $("#buildBtn").onclick = () => setBuild(!S.build);
     $("#buildDone").onclick = () => setBuild(false);
@@ -567,8 +604,8 @@
     renderMap();
   }
   function fillFavorites() {
-    if (S.mode === "senate") for (const r of S.L.races) { if (S.pick.senate[r.st]) continue; const p = raceP(r); S.pick.senate[r.st] = p.R >= Math.max(p.D, p.I) ? "R" : p.D >= p.I ? "D" : "I"; }
-    else for (const d of S.L.districts) { if (S.pick.house[d.id] || d.sameParty) continue; S.pick.house[d.id] = d.p >= 0.5 ? "D" : "R"; }
+    if (S.mode === "senate") for (const r of S.L.races) { if (S.pick.senate[r.st]) continue; const p = srcRace(r); S.pick.senate[r.st] = p.R >= Math.max(p.D, p.I) ? "R" : p.D >= p.I ? "D" : "I"; }
+    else for (const d of S.L.districts) { if (S.pick.house[d.id] || d.sameParty) continue; S.pick.house[d.id] = srcDist(d) >= 0.5 ? "D" : "R"; }
     renderMap();
   }
   let buildTimer;
@@ -602,11 +639,11 @@
         say = tie ? "A 50–50 Senate. Republicans keep control because the Vice President breaks ties." : `${winD ? "Democrats" : "Republicans"} win the ${ch}, ${Math.max(dLock, rLock)} to ${Math.min(dLock, rLock)}.`;
         sub = "Every race is decided in your map.";
       } else if (!keys.length) {
-        say = `Our forecast: ${PARTIES[lead]} have ${aChance(pl)} of winning the ${ch}.`;
+        say = `${S.src === "combined" ? "Our forecast" : SRC_LABEL[S.src]}: ${PARTIES[lead]} have ${aChance(pl)} of winning the ${ch}.`;
         sub = `Start tapping ${senate ? "states" : "districts"} to see how your picks change the outcome.`;
       } else {
         say = `With your picks, ${PARTIES[lead]} have ${aChance(pl)} of winning the ${ch}.`;
-        sub = `The races you haven't picked are filled in with our forecast. Expected result: ${senate ? `${Math.round(100 - res.R)} Democrats, ${Math.round(res.R)} Republicans` : `${Math.round(res.D)} Democrats, ${435 - Math.round(res.D)} Republicans`}.`;
+        sub = `The races you haven't picked are filled in using ${S.src === "polls" ? "the polls" : S.src === "markets" ? "the betting odds" : "our forecast"}. Expected result: ${senate ? `${Math.round(100 - res.R)} Democrats, ${Math.round(res.R)} Republicans` : `${Math.round(res.D)} Democrats, ${435 - Math.round(res.D)} Republicans`}.`;
       }
       const a = $("#buildSay"), b = $("#buildSub");
       if (a) { a.textContent = say; b.textContent = sub; }

@@ -84,6 +84,15 @@
       <label class="picker"><span class="sr-only">Choose a state</span><select id="statePick"><option value="">Choose a state from a list…</option></select></label>
       <button type="button" class="btn build-btn" id="buildBtn" aria-pressed="false">Make your own prediction</button>
     </div>
+    <div class="src-row">
+      <span class="src-label" id="srcLabel">Map based on:</span>
+      <div class="tabs" role="group" aria-labelledby="srcLabel">
+        <button type="button" data-src="combined" aria-pressed="true">Combined</button>
+        <button type="button" data-src="polls" aria-pressed="false">Polls only</button>
+        <button type="button" data-src="markets" aria-pressed="false">Odds only</button>
+      </div>
+    </div>
+    <p class="src-say" id="srcSay"></p>
     <div class="rating-bar" id="ratingBar"></div>
 
     <div class="build" id="build" hidden>

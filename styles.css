@@ -325,3 +325,9 @@ h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px; }
 .gap-list .gap-bars .track::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink-3); }
 .gap-list .gap-bars b { text-align: right; font-variant-numeric: tabular-nums; }
 .gap-list .gap-say { grid-column: 1 / -1; font-size: 15px; color: var(--ink-2); margin-top: 4px; }
+
+/* map source switch */
+.src-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 8px; }
+.src-label { font-weight: 700; color: var(--ink-2); }
+.src-say { margin: 0 0 14px; font-size: 16px; }
+@media (max-width: 480px) { .src-row .tabs button { padding: 10px 12px; font-size: 15px; } }
