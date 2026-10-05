@@ -192,7 +192,7 @@
     const days = Math.max(0, Math.ceil((Date.parse("2026-11-03T05:00:00Z") - Date.now()) / 86400e3));
     $("#lede").textContent = `We combine every public poll with Polymarket and Kalshi into one clear forecast for the House, the Senate and every district. When the two disagree, we show you. Election Day is Tuesday, November 3${days > 0 ? `, ${days} days from now` : ""}.`;
     $("#updated").textContent = STATIC ? `Snapshot taken ${fmtWhen(S.L.updated)}.` : `Updated ${fmtWhen(S.L.updated)}. Betting odds refresh every minute while this page is open.`;
-    $("#foot").textContent = `Polls vs. Odds · pollsvsodds.com · Polls vs. the prediction markets, for every race in 2026. Updated ${fmtWhen(S.L.updated)}. Polls from VoteHub; betting odds from Polymarket and Kalshi.`;
+    $("#foot").innerHTML = `Polls vs. Odds · pollsvsodds.com · Polls vs. the prediction markets, for every race in 2026. Updated ${fmtWhen(S.L.updated)}. Polls from VoteHub; betting odds from Polymarket and Kalshi. <a href="https://github.com/sulaimwn/polls-vs-odds" target="_blank" rel="noopener">Source code on GitHub</a>.`;
     $("#refreshNote").textContent = STATIC ? `This page is a snapshot from ${fmtWhen(S.L.updated)}.` : "Polls and Kalshi odds refresh every 30 minutes. Polymarket odds refresh every minute while the page is open.";
   }
 
