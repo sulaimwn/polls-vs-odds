@@ -9,7 +9,8 @@ A live forecast for the 2026 U.S. House and Senate. It combines every public pol
 Written for someone who doesn't follow polling closely:
 
 - **The answer first.** One plain sentence and one big number per chamber ("Democrats are very likely to win the House, 94%"), plus a seat bar showing how close each side is to a majority.
-- **The map.** Tap a state, or pick it from a list, to see its Senate race and House seats: candidate photos, who's favored, the polling average and every poll. Each poll is labeled by who paid for it and how reliable the pollster is.
+- **Search** for any candidate, district ("TX-23", "Texas 23"), state or region ("Midwest", "Sun Belt", "Swing states"). The map flies to it and opens the race.
+- **A real district map** of all 435 House seats with zoom (buttons, Ctrl+scroll, pinch, drag), plus a Senate map by state. Tap any district or state for candidate photos, who's favored, the polling average and every poll, each labeled by who paid for it and how reliable the pollster is.
 - **Make your own prediction.** Tap states to color them blue or red and see who would win the majority.
 - **The closest races**, **how the odds have changed**, and a short **where these numbers come from** section with the arithmetic. Pollster ratings and every recent poll are tucked into "read more" sections.
 
@@ -23,6 +24,7 @@ Written for someone who doesn't follow polling closely:
 | [538 pollster ratings](https://github.com/fivethirtyeight/data/tree/master/pollster-ratings) | Ratings and 2016–2024 accuracy | static (final 2024 edition) |
 | [congress-legislators](https://github.com/unitedstates/congress-legislators) | Incumbents | every run |
 | Wikipedia / Congress Bioguide | Candidate photos | cached in `img/c/` |
+| Census TIGERweb (120th Congress), FL Senate, LA Legislature, TN state GIS, AL 2023 plan | 2026 district lines | `npm run districts` when maps change |
 
 `deploy/github-pages-workflow.yml` is a ready-made GitHub Actions workflow that runs `scripts/update.mjs` every 30 minutes and deploys to GitHub Pages.
 
@@ -41,7 +43,7 @@ npm run build:artifact  # self-contained copy in dist-artifact/ (photos inlined)
 - `index.html`, `styles.css`, `app.js`: the site (no build step, no framework)
 - `scripts/update.mjs`: data pipeline and polling model
 - `scripts/photos.mjs`: candidate photos
-- `scripts/geo.mjs`, `scripts/hexmap.mjs`: state map and House hex cartogram
+- `scripts/geo.mjs`: state map; `scripts/districts-geo.mjs`: 2026 House district map (sources listed at the top of the file)
 - `scripts/pollster-history.mjs`: pollster track records from 538's archive
 - `config/senate.json`: the 35 Senate races, candidates and 2024 presidential margins
 - `config/pollster-aliases.json`: manual fixes for pollster-name matching

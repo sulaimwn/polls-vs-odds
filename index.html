@@ -54,15 +54,24 @@
   </section>
 
   <section class="block wrap" id="map">
-    <h2>Pick a state to see its races</h2>
+    <h2>Find any race</h2>
+    <div class="search" id="searchBox">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 13l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="search" id="search" placeholder="Search any race" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="searchList" aria-autocomplete="list" aria-label="Search races">
+      <ul class="search-list" id="searchList" role="listbox" hidden></ul>
+    </div>
+    <p class="search-hint">Try <button type="button" class="eg" data-q="Talarico">Talarico</button>, <button type="button" class="eg" data-q="TX-35">TX-35</button>, <button type="button" class="eg" data-q="Ohio">Ohio</button> or <button type="button" class="eg" data-q="Midwest">Midwest</button></p>
+    <div class="region-card" id="regionCard" hidden></div>
+
     <div class="map-controls">
       <div class="tabs" role="group" aria-label="Which races to show">
-        <button type="button" id="tabSenate" aria-pressed="true">Senate races</button>
-        <button type="button" id="tabHouse" aria-pressed="false">House races</button>
+        <button type="button" id="tabHouse" aria-pressed="true">House map</button>
+        <button type="button" id="tabSenate" aria-pressed="false">Senate map</button>
       </div>
       <label class="picker"><span class="sr-only">Choose a state</span><select id="statePick"><option value="">Choose a state from a list…</option></select></label>
       <button type="button" class="btn build-btn" id="buildBtn" aria-pressed="false">Make your own prediction</button>
     </div>
+    <div class="rating-bar" id="ratingBar"></div>
 
     <div class="build" id="build" hidden>
       <p class="build-how" id="buildHow"></p>
@@ -75,7 +84,15 @@
     </div>
 
     <div class="map-box">
-      <svg class="map" id="mapSvg" viewBox="0 0 975 610" role="img" aria-label="Map of the United States"></svg>
+      <div class="zoom" role="group" aria-label="Zoom the map">
+        <button type="button" class="btn zbtn" id="zoomIn" aria-label="Zoom in">+</button>
+        <button type="button" class="btn zbtn" id="zoomOut" aria-label="Zoom out">−</button>
+        <button type="button" class="btn" id="zoomReset">Whole country</button>
+      </div>
+      <div class="map-frame" id="mapFrame">
+        <svg class="map" id="mapSvg" viewBox="0 0 975 610" role="img" aria-label="Map of the United States"></svg>
+        <div class="map-note" id="mapNote" hidden>Hold Ctrl and scroll to zoom, or use the + and − buttons</div>
+      </div>
       <div class="legend" id="legend"></div>
       <div class="small-states" id="smallStates"></div>
     </div>

@@ -49,9 +49,10 @@
   const split = (pL, colL, pR, colR) => `<div class="split"><i style="width:${pL * 100}%;background:${colL}"></i><i style="width:${Math.max(0, 1 - pL - pR) * 100}%;background:var(--toss)"></i><i style="width:${pR * 100}%;background:${colR}"></i></div>`;
 
   // ---------- state ----------
-  const S = { L: null, H: null, G: null, mode: "senate", build: false, pick: { senate: {}, house: {} }, live: { house: null, senate: null, race: {} }, open: null, focusD: null, allPolls: false, allDistricts: false, lastFocus: null, allPollsters: false };
+  const S = { L: null, H: null, G: null, D: null, region: null, mode: "house", build: false, pick: { senate: {}, house: {} }, live: { house: null, senate: null, race: {} }, open: null, focusD: null, allPolls: false, allDistricts: false, lastFocus: null, allPollsters: false };
   const raceBy = (st) => S.L.races.find((r) => r.st === st);
   const distsOf = (st) => S.L.districts.filter((d) => d.st === st);
+  const distBy = (id) => S.L.districts.find((d) => d.id === id);
 
   function blend(poll, pm, k) {
     const W = S.L.weights;
@@ -113,7 +114,7 @@
     const ds = S.L.districts, { n } = rng(435);
     const SD = 7, NAT = 2, LOC = Math.sqrt(SD * SD - NAT * NAT);
     const z = ds.map((d) => SD * phiInv(d.p));
-    const fixed = ds.map((d) => (picks[d.st] ? (picks[d.st] === "D" ? 1 : 0) : d.sameParty ? (d.p > 0.5 ? 1 : 0) : -1));
+    const fixed = ds.map((d) => (picks[d.id] ? (picks[d.id] === "D" ? 1 : 0) : d.sameParty ? (d.p > 0.5 ? 1 : 0) : -1));
     let ctl = 0, seats = 0;
     for (let k = 0; k < N; k++) {
       const e = n() * NAT;
@@ -169,85 +170,382 @@
   }
 
   // ---------- map ----------
+  const REGIONS = [
+    { name: "Northeast", alias: "north east", states: ["CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA"] },
+    { name: "New England", alias: "", states: ["CT", "ME", "MA", "NH", "RI", "VT"] },
+    { name: "Mid-Atlantic", alias: "mid atlantic", states: ["NY", "NJ", "PA", "DE", "MD"] },
+    { name: "Midwest", alias: "mid west heartland", states: ["IL", "IN", "MI", "OH", "WI", "IA", "KS", "MN", "MO", "NE", "ND", "SD"] },
+    { name: "Great Lakes", alias: "", states: ["IL", "IN", "MI", "OH", "WI", "MN"] },
+    { name: "Rust Belt", alias: "", states: ["PA", "OH", "MI", "WI", "IN"] },
+    { name: "Great Plains", alias: "plains", states: ["KS", "NE", "ND", "SD", "OK"] },
+    { name: "South", alias: "southern dixie", states: ["DE", "FL", "GA", "MD", "NC", "SC", "VA", "WV", "AL", "KY", "MS", "TN", "AR", "LA", "OK", "TX"] },
+    { name: "Southeast", alias: "south east", states: ["AL", "FL", "GA", "MS", "NC", "SC", "TN"] },
+    { name: "Deep South", alias: "", states: ["AL", "GA", "LA", "MS", "SC"] },
+    { name: "Sun Belt", alias: "sunbelt", states: ["AZ", "NV", "NM", "TX", "FL", "GA", "NC", "SC"] },
+    { name: "Southwest", alias: "south west", states: ["AZ", "NM", "NV", "TX"] },
+    { name: "Appalachia", alias: "", states: ["WV", "KY", "TN"] },
+    { name: "West", alias: "western", states: ["AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY", "AK", "CA", "HI", "OR", "WA"] },
+    { name: "Mountain West", alias: "rockies rocky mountains", states: ["AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY"] },
+    { name: "West Coast", alias: "pacific coast", states: ["CA", "OR", "WA"] },
+    { name: "Pacific Northwest", alias: "northwest pnw", states: ["OR", "WA", "ID"] },
+    { name: "Swing states", alias: "battleground battlegrounds", states: ["AZ", "GA", "MI", "NV", "NC", "PA", "WI"] },
+  ];
+  const FULL = { x: 0, y: 0, w: 975, h: 610 }, MAXZ = 24;
+  let view = { ...FULL };
+  const distShape = (id) => S.D.find((d) => d.id === id);
+  function stateBox(st) {
+    const bs = S.D.filter((d) => d.st === st).map((d) => d.b);
+    return [Math.min(...bs.map((b) => b[0])), Math.min(...bs.map((b) => b[1])), Math.max(...bs.map((b) => b[2])), Math.max(...bs.map((b) => b[3]))];
+  }
+  const unionBox = (boxes) => [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+
   function senateFill(st) {
     const race = raceBy(st);
     if (!race) return null;
     const pk = S.build && S.mode === "senate" ? S.pick.senate[st] : null;
-    if (pk) return { fill: color(pk), picked: true, light: false };
+    if (pk) return { fill: color(pk), picked: true, light: false, key: pk + "1" };
     const p = raceP(race), rt = rating(p.D, p.R, p.I);
-    return { fill: rt.fill, light: rt.light };
+    return { fill: rt.fill, light: rt.light, key: rt.tier ? (rt.lead === "I" ? "D" : rt.lead) + rt.tier : "T" };
   }
-  function houseShare(st) { const ds = distsOf(st); return ds.length ? ds.reduce((a, d) => a + d.p, 0) / ds.length : null; }
-  function shareFill(s) {
-    if (s >= 0.8) return { fill: "var(--d1)", light: false };
-    if (s >= 0.55) return { fill: "var(--d2)", light: false };
-    if (s > 0.45) return { fill: "var(--toss)", light: true };
-    if (s > 0.2) return { fill: "var(--r2)", light: false };
-    return { fill: "var(--r1)", light: false };
-  }
-  function houseFill(st) {
-    const pk = S.build && S.mode === "house" ? S.pick.house[st] : null;
-    if (pk) return { fill: color(pk), picked: true, light: false };
-    const s = houseShare(st);
-    return s == null ? null : shareFill(s);
+  function districtFill(d) {
+    const pk = S.build && S.mode === "house" ? S.pick.house[d.id] : null;
+    if (pk) return { fill: color(pk), picked: true, light: false, key: pk + "1" };
+    if (d.sameParty) { const P = d.p > 0.5 ? "D" : "R"; return { fill: color(P), light: false, key: P + "1" }; }
+    const rt = rating(d.p, 1 - d.p);
+    return { fill: rt.fill, light: rt.light, key: rt.tier ? rt.lead + rt.tier : "T" };
   }
   function renderMap() {
     const G = S.G, svg = $("#mapSvg");
-    const fillOf = (st) => (S.mode === "senate" ? senateFill(st) : houseFill(st));
-    svg.innerHTML = G.states.map((s) => {
-      const f = fillOf(s.abbr);
-      const label = S.mode === "senate" ? (raceBy(s.abbr) ? `${s.name}: Senate race` : `${s.name}: no Senate race this year`) : `${s.name}: House races`;
-      return `<path class="st${f ? "" : " none"}${f?.picked ? " picked" : ""}${S.open === s.abbr ? " sel" : ""}" data-st="${s.abbr}" d="${s.d}" style="fill:${f ? f.fill : "var(--none)"}" tabindex="0" role="button" aria-label="${esc(label)}"></path>`;
-    }).join("") + G.states.filter((s) => s.w > 26 && s.h > 18 && !SMALL.includes(s.abbr)).map((s) => {
-      const [dx, dy] = LABEL_NUDGE[s.abbr] || [0, 0];
-      const f = fillOf(s.abbr);
-      return `<text class="lbl" x="${s.cx + dx}" y="${s.cy + dy}" style="fill:${!f ? "var(--ink-3)" : f.light ? "#15171c" : "#fff"}">${s.abbr}</text>`;
-    }).join("");
+    const inRegion = S.region ? new Set(S.region.states) : null;
+    let shapes;
+    if (S.mode === "house") {
+      shapes = S.D.map((D) => {
+        const d = distBy(D.id), f = districtFill(d);
+        return `<path class="dist${f.picked ? " picked" : ""}${S.focusD === D.id ? " sel" : ""}${inRegion && !inRegion.has(D.st) ? " dim" : ""}" data-d="${D.id}" data-st="${D.st}" d="${D.d}" style="fill:${f.fill}" tabindex="-1" aria-label="${esc(STATE_NAMES[D.st])} district ${D.n || "at-large"}"></path>`;
+      }).join("");
+    } else {
+      shapes = G.states.map((s) => {
+        const f = senateFill(s.abbr);
+        const label = raceBy(s.abbr) ? `${s.name}: Senate race` : `${s.name}: no Senate race this year`;
+        return `<path class="st${f ? "" : " none"}${f?.picked ? " picked" : ""}${S.open === s.abbr ? " sel" : ""}${inRegion && !inRegion.has(s.abbr) ? " dim" : ""}" data-st="${s.abbr}" d="${s.d}" style="fill:${f ? f.fill : "var(--none)"}" tabindex="0" role="button" aria-label="${esc(label)}"></path>`;
+      }).join("");
+    }
+    svg.innerHTML = `<g>${shapes}</g><path class="borders" d="${G.borders}"/><path class="nation" d="${G.nation}"/><g id="mapLabels"></g>`;
     const L = S.mode === "senate"
       ? [["var(--d1)", "Very likely Democrat"], ["var(--d2)", "Likely Democrat"], ["var(--d3)", "Leaning Democrat"], ["var(--toss)", "Too close to call"], ["var(--r3)", "Leaning Republican"], ["var(--r2)", "Likely Republican"], ["var(--r1)", "Very likely Republican"], ["var(--i2)", "Independent favored"], ["var(--none)", "No Senate race this year"]]
-      : [["var(--d1)", "Almost all seats Democratic"], ["var(--d2)", "Mostly Democratic"], ["var(--toss)", "Evenly split"], ["var(--r2)", "Mostly Republican"], ["var(--r1)", "Almost all seats Republican"]];
+      : [["var(--d1)", "Very likely Democrat"], ["var(--d2)", "Likely Democrat"], ["var(--d3)", "Leaning Democrat"], ["var(--toss)", "Too close to call"], ["var(--r3)", "Leaning Republican"], ["var(--r2)", "Likely Republican"], ["var(--r1)", "Very likely Republican"]];
     $("#legend").innerHTML = L.map(([c, l]) => `<span><i style="background:${c}"></i>${l}</span>`).join("");
-    $("#smallStates").innerHTML = "<span>Small states:</span>" + SMALL.map((st) => { const f = fillOf(st); return `<button type="button" data-st="${st}"><i style="background:${f ? f.fill : "var(--none)"}"></i>${STATE_NAMES[st]}</button>`; }).join("");
+    $("#smallStates").hidden = S.mode !== "senate";
+    if (S.mode === "senate") $("#smallStates").innerHTML = "<span>Small states:</span>" + SMALL.map((st) => { const f = senateFill(st); return `<button type="button" data-st="${st}"><i style="background:${f ? f.fill : "var(--none)"}"></i>${STATE_NAMES[st]}</button>`; }).join("");
+    applyView();
+    renderRatingBar();
     if (S.build) renderBuild();
   }
-  function tipHTML(st) {
-    let h = `<b>${esc(STATE_NAMES[st])}</b>`;
-    if (S.mode === "senate") {
-      const race = raceBy(st);
-      if (!race) return h + `<div class="hint">No Senate race this year</div>`;
-      const p = raceP(race);
-      h += race.c.filter((c) => p[c.party] >= 0.01).map((c) => `<div class="row"><span>${esc(c.name)} (${c.party})</span><b style="color:${color(c.party)}">${pctShort(p[c.party])}</b></div>`).join("");
+
+  // seat tally by forecast category, like a newspaper results bar
+  function renderRatingBar() {
+    const keys = ["D1", "D2", "D3", "T", "R3", "R2", "R1"], n = Object.fromEntries(keys.map((k) => [k, 0]));
+    let total, need;
+    if (S.mode === "house") { for (const d of S.L.districts) n[districtFill(d).key]++; total = 435; need = 218; }
+    else { n.D1 += S.L.senate.notUp.D; n.R1 += S.L.senate.notUp.R; for (const r of S.L.races) n[senateFill(r.st).key]++; total = 100; need = 51; }
+    const fills = { D1: "var(--d1)", D2: "var(--d2)", D3: "var(--d3)", T: "var(--toss)", R3: "var(--r3)", R2: "var(--r2)", R1: "var(--r1)" };
+    const dark = { D1: 1, D2: 1, R1: 1, R2: 1 };
+    const dSum = n.D1 + n.D2 + n.D3, rSum = n.R1 + n.R2 + n.R3;
+    const barW = $("#ratingBar").clientWidth || 600; // only print a count where it fits
+    $("#ratingBar").innerHTML = `<div class="ends"><span class="dem">Democrats favored: ${dSum}</span>${n.T ? `<span>Too close: ${n.T}</span>` : ""}<span class="rep">Republicans favored: ${rSum}</span></div>
+      <div class="segs" role="img" aria-label="${dSum} seats favor Democrats, ${n.T} too close, ${rSum} favor Republicans. ${need} needed.">${keys.map((k) => n[k] ? `<div style="flex:${n[k]};background:${fills[k]};color:${dark[k] ? "#fff" : "#15171c"}">${(n[k] / total) * barW >= 30 ? n[k] : ""}</div>` : "").join("")}</div>
+      <div class="under"><span class="tri" style="left:${(need / total) * 100}%">${need} to win${S.mode === "senate" ? " (includes seats not up this year)" : ""}</span></div>`;
+  }
+
+  // ---------- zoom & pan ----------
+  function applyView() {
+    $("#mapSvg").setAttribute("viewBox", `${view.x.toFixed(2)} ${view.y.toFixed(2)} ${view.w.toFixed(2)} ${view.h.toFixed(2)}`);
+    $("#mapFrame").classList.toggle("zoomed", view.w < 974);
+    drawLabels();
+  }
+  function clampView(v) {
+    const w = clamp(v.w, 975 / MAXZ, 975), h = (w * 610) / 975;
+    return { x: clamp(v.x, -w * 0.3, 975 - w * 0.7), y: clamp(v.y, -h * 0.3, 610 - h * 0.7), w, h };
+  }
+  let animFrame;
+  function animateTo(target, ms = 500) {
+    cancelAnimationFrame(animFrame);
+    target = clampView(target);
+    const from = { ...view }, t0 = performance.now();
+    if (document.hidden || matchMedia("(prefers-reduced-motion: reduce)").matches) { view = target; return applyView(); }
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      view = { x: from.x + (target.x - from.x) * e, y: from.y + (target.y - from.y) * e, w: from.w + (target.w - from.w) * e, h: from.h + (target.h - from.h) * e };
+      applyView();
+      if (k < 1) animFrame = requestAnimationFrame(step);
+    };
+    animFrame = requestAnimationFrame(step);
+  }
+  function zoomAround(factor, cx, cy, ms = 250) {
+    const w = clamp(view.w / factor, 975 / MAXZ, 975), h = (w * 610) / 975;
+    animateTo({ x: cx - (cx - view.x) * (w / view.w), y: cy - (cy - view.y) * (h / view.h), w, h }, ms);
+  }
+  function zoomToBox([x0, y0, x1, y1], pad = 0.2) {
+    let w = Math.max((x1 - x0) * (1 + 2 * pad), (y1 - y0) * (1 + 2 * pad) * (975 / 610), 975 / 16);
+    w = Math.min(w, 975);
+    const h = (w * 610) / 975;
+    animateTo({ x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h });
+  }
+  function toUser(clientX, clientY) {
+    const r = $("#mapSvg").getBoundingClientRect();
+    return { x: view.x + ((clientX - r.left) / r.width) * view.w, y: view.y + ((clientY - r.top) / r.height) * view.h };
+  }
+  // district numbers appear once there's room for them; state abbreviations on the Senate map
+  function drawLabels() {
+    const g = $("#mapLabels");
+    if (!g) return;
+    const k = $("#mapSvg").getBoundingClientRect().width / view.w || 1;
+    const fs = 12 / k, sw = 3 / k, out = [];
+    const visible = (x, y) => x > view.x && x < view.x + view.w && y > view.y && y < view.y + view.h;
+    if (S.mode === "house") {
+      if (view.w < 975 / 2.5) for (const D of S.D) {
+        const w = (D.b[2] - D.b[0]) * k, h = (D.b[3] - D.b[1]) * k;
+        if (w < 30 || h < 16 || !visible(D.c[0], D.c[1])) continue;
+        const f = districtFill(distBy(D.id));
+        out.push(`<text class="dlbl" x="${D.c[0]}" y="${D.c[1]}" font-size="${fs}" stroke-width="${sw}" style="fill:${f.light ? "#15171c" : "#fff"};stroke:${f.light ? "rgba(255,255,255,.7)" : "rgba(0,0,0,.35)"}">${w > 54 ? D.id.replace("-AL", " AL") : D.n || "AL"}</text>`);
+      }
     } else {
-      const ds = distsOf(st), eD = ds.reduce((a, d) => a + d.p, 0);
-      h += `<div class="row"><span>${ds.length} House seat${ds.length > 1 ? "s" : ""}</span></div><div class="row"><span>Expected</span><b><span class="dem">${Math.round(eD)} D</span> · <span class="rep">${ds.length - Math.round(eD)} R</span></b></div>`;
+      for (const s of S.G.states) {
+        if (s.w * k < 26 || s.h * k < 16 || SMALL.includes(s.abbr) && view.w > 400) continue;
+        const [dx, dy] = LABEL_NUDGE[s.abbr] || [0, 0];
+        const f = senateFill(s.abbr);
+        out.push(`<text class="dlbl" x="${s.cx + dx}" y="${s.cy + dy}" font-size="${fs}" stroke-width="${sw * 0.6}" style="fill:${!f ? "var(--ink-3)" : f.light ? "#15171c" : "#fff"};stroke:${!f || f.light ? "rgba(255,255,255,.5)" : "rgba(0,0,0,.25)"}">${s.abbr}</text>`);
+      }
     }
+    g.innerHTML = out.join("");
+  }
+  let noteTimer, noteCount = 0, dragMoved = false;
+  function bindZoom() {
+    const svg = $("#mapSvg"), frame = $("#mapFrame"), ptrs = new Map();
+    let gesture = null;
+    svg.addEventListener("wheel", (e) => {
+      if (!(e.ctrlKey || e.metaKey)) {
+        if (noteCount < 3 && !noteTimer) { noteCount++; $("#mapNote").hidden = false; noteTimer = setTimeout(() => { $("#mapNote").hidden = true; noteTimer = null; }, 1600); }
+        return;
+      }
+      e.preventDefault();
+      const p = toUser(e.clientX, e.clientY);
+      zoomAround(e.deltaY < 0 ? 1.35 : 1 / 1.35, p.x, p.y, 120);
+    }, { passive: false });
+    svg.addEventListener("pointerdown", (e) => {
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (ptrs.size === 1) { gesture = { type: "pan", sx: e.clientX, sy: e.clientY, v: { ...view } }; dragMoved = false; }
+      else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; gesture = { type: "pinch", d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, mid: toUser((a.x + b.x) / 2, (a.y + b.y) / 2), v: { ...view } }; dragMoved = true; }
+    });
+    svg.addEventListener("pointermove", (e) => {
+      if (!ptrs.has(e.pointerId) || !gesture) return;
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (gesture.type === "pan") {
+        const dx = e.clientX - gesture.sx, dy = e.clientY - gesture.sy;
+        if (gesture.v.w >= 974 || (!dragMoved && Math.hypot(dx, dy) < 6)) return; // only pan when zoomed in
+        if (!dragMoved) { dragMoved = true; frame.classList.add("dragging"); try { svg.setPointerCapture(e.pointerId); } catch {} }
+        const r = svg.getBoundingClientRect(), k = gesture.v.w / r.width;
+        cancelAnimationFrame(animFrame);
+        view = clampView({ ...gesture.v, x: gesture.v.x - dx * k, y: gesture.v.y - dy * k });
+        applyView();
+      } else if (gesture.type === "pinch" && ptrs.size === 2) {
+        const [a, b] = [...ptrs.values()], f = Math.hypot(a.x - b.x, a.y - b.y) / gesture.d0;
+        const w = clamp(gesture.v.w / f, 975 / MAXZ, 975), h = (w * 610) / 975, m = gesture.mid;
+        cancelAnimationFrame(animFrame);
+        view = clampView({ x: m.x - (m.x - gesture.v.x) * (w / gesture.v.w), y: m.y - (m.y - gesture.v.y) * (h / gesture.v.h), w, h });
+        applyView();
+      }
+    });
+    const end = (e) => { ptrs.delete(e.pointerId); if (!ptrs.size) { gesture = null; frame.classList.remove("dragging"); } else if (ptrs.size === 1) { const [p] = [...ptrs.values()]; gesture = { type: "pan", sx: p.x, sy: p.y, v: { ...view } }; } };
+    svg.addEventListener("pointerup", end);
+    svg.addEventListener("pointercancel", end);
+    $("#zoomIn").onclick = () => zoomAround(1.8, view.x + view.w / 2, view.y + view.h / 2);
+    $("#zoomOut").onclick = () => zoomAround(1 / 1.8, view.x + view.w / 2, view.y + view.h / 2);
+    $("#zoomReset").onclick = () => { clearRegion(); animateTo(FULL); };
+    addEventListener("resize", () => { drawLabels(); renderRatingBar(); });
+  }
+
+  function tipHTML(st, did) {
+    if (did) {
+      const d = distBy(did), rt = rating(d.p, 1 - d.p);
+      const rows = d.c.slice(0, 2).map((c) => `<div class="row"><span>${esc(c.name)} (${c.party})${c.inc ? " *" : ""}</span><b style="color:${color(c.party)}">${pctShort(d.sameParty ? c.pm : c.party === "D" ? d.p : c.party === "R" ? 1 - d.p : c.pm)}</b></div>`).join("");
+      return `<b>${esc(STATE_NAMES[d.st])}, ${d.n ? `District ${d.n}` : "at-large"}</b>${rows}<div class="hint">${d.sameParty ? "Both candidates from the same party" : rt.label}${d.c.some((c) => c.inc) ? " · * current member" : ""}</div><div class="hint">${S.build ? "Tap to change your pick" : "Tap for details"}</div>`;
+    }
+    let h = `<b>${esc(STATE_NAMES[st])}</b>`;
+    const race = raceBy(st);
+    if (!race) return h + `<div class="hint">No Senate race this year</div>`;
+    const p = raceP(race);
+    h += race.c.filter((c) => p[c.party] >= 0.01).map((c) => `<div class="row"><span>${esc(c.name)} (${c.party})</span><b style="color:${color(c.party)}">${pctShort(p[c.party])}</b></div>`).join("");
     return h + `<div class="hint">${S.build ? "Tap to change your pick" : "Tap for details"}</div>`;
   }
-  function activate(st) {
-    if (S.build) return cyclePick(st);
-    openPanel(st);
+  function activate(el) {
+    const st = el.dataset.st, did = el.dataset.d;
+    if (S.build) return cyclePick(S.mode === "house" ? did : st);
+    openPanel(st, did);
   }
   function bindMap() {
     const svg = $("#mapSvg"), tip = $("#tip");
     svg.addEventListener("pointermove", (e) => {
-      const el = e.target.closest(".st");
-      if (!el || e.pointerType !== "mouse") { tip.hidden = true; return; }
-      tip.innerHTML = tipHTML(el.dataset.st);
+      const el = e.target.closest(".st:not(.none), .dist");
+      if (!el || e.pointerType !== "mouse" || $("#mapFrame").classList.contains("dragging")) { tip.hidden = true; return; }
+      tip.innerHTML = tipHTML(el.dataset.st, el.dataset.d);
       tip.style.left = clamp(e.clientX, 150, innerWidth - 150) + "px"; tip.style.top = e.clientY + "px"; tip.hidden = false;
     });
     svg.addEventListener("pointerleave", () => (tip.hidden = true));
-    svg.addEventListener("click", (e) => { const el = e.target.closest(".st"); if (el) { tip.hidden = true; activate(el.dataset.st); } });
-    svg.addEventListener("keydown", (e) => { const el = e.target.closest(".st"); if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); activate(el.dataset.st); } });
-    $("#smallStates").addEventListener("click", (e) => { const b = e.target.closest("[data-st]"); if (b) activate(b.dataset.st); });
+    svg.addEventListener("click", (e) => {
+      if (dragMoved) { dragMoved = false; return; }
+      const el = e.target.closest(".st:not(.none), .dist");
+      if (el) { tip.hidden = true; activate(el); }
+    });
+    svg.addEventListener("keydown", (e) => { const el = e.target.closest(".st:not(.none)"); if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); activate(el); } });
+    $("#smallStates").addEventListener("click", (e) => { const b = e.target.closest("[data-st]"); if (b) activate(b); });
     $("#statePick").innerHTML = '<option value="">Choose a state from a list…</option>' + Object.entries(STATE_NAMES).sort((a, b) => a[1].localeCompare(b[1])).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
-    $("#statePick").addEventListener("change", (e) => { if (e.target.value) { openPanel(e.target.value); e.target.value = ""; } });
-    const setMode = (m) => { S.mode = m; $("#tabSenate").setAttribute("aria-pressed", m === "senate"); $("#tabHouse").setAttribute("aria-pressed", m === "house"); renderMap(); };
+    $("#statePick").addEventListener("change", (e) => { const st = e.target.value; if (st) { clearRegion(); zoomToBox(stateBox(st)); openPanel(st); e.target.value = ""; } });
     $("#tabSenate").onclick = () => setMode("senate");
     $("#tabHouse").onclick = () => setMode("house");
     $("#buildBtn").onclick = () => setBuild(!S.build);
     $("#buildDone").onclick = () => setBuild(false);
     $("#buildReset").onclick = () => { S.pick[S.mode] = {}; renderMap(); };
     $("#buildFill").onclick = fillFavorites;
+    bindZoom();
+  }
+  function setMode(m) {
+    S.mode = m;
+    $("#tabSenate").setAttribute("aria-pressed", m === "senate");
+    $("#tabHouse").setAttribute("aria-pressed", m === "house");
+    renderMap();
+  }
+
+  // ---------- search: names, districts, states, regions ----------
+  const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  let INDEX = [];
+  function buildIndex() {
+    const items = [];
+    for (const [ab, name] of Object.entries(STATE_NAMES)) {
+      const ds = distsOf(ab), race = raceBy(ab);
+      items.push({ type: "state", text: norm(`${name} ${ab}`), label: name, sub: `${ds.length} House seat${ds.length > 1 ? "s" : ""}${race ? " · Senate race" : ""}`, st: ab });
+    }
+    for (const r of S.L.races) for (const c of r.c) if (!c.generic) items.push({ type: "cand", text: norm(c.name), label: c.name, sub: `${PARTY[c.party]} for Senate in ${r.name}`, st: r.st, chamber: "senate", party: c.party });
+    for (const d of S.L.districts) {
+      const place = `${STATE_NAMES[d.st]}, ${d.n ? `District ${d.n}` : "at-large"}`;
+      items.push({ type: "district", text: norm(`${d.id} ${STATE_NAMES[d.st]} ${d.n} district`), label: place, sub: d.c.slice(0, 2).map((c) => `${c.name} (${c.party})`).join(" vs "), id: d.id, st: d.st });
+      for (const c of d.c) if (!c.generic) items.push({ type: "cand", text: norm(c.name), label: c.name, sub: `${PARTY[c.party] || "Candidate"} for the House in ${place}`, id: d.id, st: d.st, chamber: "house", party: c.party });
+      if (d.holder && !d.c.some((c) => c.inc)) items.push({ type: "cand", text: norm(d.holder), label: d.holder, sub: `Current member for ${place}`, id: d.id, st: d.st, chamber: "house" });
+    }
+    for (const g of REGIONS) items.push({ type: "region", text: norm(`${g.name} ${g.alias}`), label: g.name, sub: g.states.map((s) => STATE_NAMES[s]).join(", "), region: g });
+    INDEX = items;
+  }
+  function parseDistrict(q) { // "tx-23", "texas 23", "23rd district in texas", "ny12"
+    const m = q.match(/(\d{1,2})/);
+    if (!m) return null;
+    const n = +m[1], rest = q.replace(/\d+(st|nd|rd|th)?/g, " ").replace(/\b(district|cd|congressional|the|in|of|seat)\b/g, " ").trim();
+    if (!rest) return null;
+    const st = Object.keys(STATE_NAMES).find((ab) => ab.toLowerCase() === rest || norm(STATE_NAMES[ab]) === rest) || Object.keys(STATE_NAMES).find((ab) => norm(STATE_NAMES[ab]).startsWith(rest) && rest.length >= 3);
+    if (!st) return null;
+    const id = `${st}-${String(n).padStart(2, "0")}`;
+    return S.L.districts.find((d) => d.id === id) || (n <= 1 ? S.L.districts.find((d) => d.id === `${st}-AL`) : null);
+  }
+  function search(qRaw) {
+    const q = norm(qRaw);
+    if (!q) return [];
+    const words = q.split(" ");
+    const scored = [];
+    const exact = parseDistrict(q);
+    for (const it of INDEX) {
+      let s = 0;
+      if (exact && it.type === "district" && it.id === exact.id) s = 1000;
+      else if (it.text === q) s = 500;
+      else if (it.text.startsWith(q)) s = 300;
+      else if (words.every((w) => it.text.split(" ").some((t) => t.startsWith(w)))) s = 200;
+      else if (q.length >= 3 && it.text.includes(q)) s = 80;
+      if (!s) continue;
+      s += { state: 40, region: 35, cand: 20, district: 10 }[it.type] || 0;
+      scored.push({ it, s });
+    }
+    scored.sort((a, b) => b.s - a.s || a.it.label.localeCompare(b.it.label));
+    const seen = new Set(), out = [];
+    for (const { it } of scored) { const key = it.type + it.label + (it.id || it.st || ""); if (seen.has(key)) continue; seen.add(key); out.push(it); if (out.length >= 8) break; }
+    return out;
+  }
+  let results = [], active = -1;
+  function oddsFor(it) {
+    if (it.type === "cand" && it.chamber === "house") { // this candidate's own chance
+      const d = distBy(it.id), c = d.c.find((x) => x.name === it.label);
+      const p = !c ? null : d.sameParty ? c.pm : c.party === "D" ? d.p : c.party === "R" ? 1 - d.p : c.pm;
+      return p == null ? "" : `<span class="s-odds" style="color:${color(c.party)}">${pctShort(p)}</span>`;
+    }
+    if (it.type === "district") { const d = distBy(it.id); const rt = rating(d.p, 1 - d.p); return d.sameParty ? "" : `<span class="s-odds" style="color:${color(rt.lead)}">${rt.lead} ${pctShort(rt.p)}</span>`; }
+    if (it.type === "cand" && it.chamber === "senate") { const p = raceP(raceBy(it.st)); return `<span class="s-odds" style="color:${color(it.party)}">${pctShort(p[it.party])}</span>`; }
+    return `<span class="s-type">${it.type === "region" ? "Region" : "State"}</span>`;
+  }
+  function showResults() {
+    const list = $("#searchList"), input = $("#search");
+    if (!input.value.trim()) { list.hidden = true; input.setAttribute("aria-expanded", "false"); return; }
+    list.innerHTML = results.length ? results.map((it, i) => `<li role="option" id="sr-${i}" data-i="${i}" aria-selected="${i === active}"><span class="s-label">${esc(it.label)}</span><span class="s-sub">${esc(it.sub)}</span>${oddsFor(it)}</li>`).join("") : `<li class="s-empty">No matches. Try a last name, a state, or a district like "TX-23".</li>`;
+    list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    input.setAttribute("aria-activedescendant", active >= 0 ? `sr-${active}` : "");
+  }
+  function choose(it) {
+    $("#search").value = it.label;
+    $("#searchList").hidden = true;
+    $("#search").setAttribute("aria-expanded", "false");
+    clearRegion();
+    if (it.type === "region") return showRegion(it.region);
+    if (it.type === "district" || (it.type === "cand" && it.chamber === "house")) {
+      if (S.mode !== "house") setMode("house");
+      S.focusD = it.id;
+      zoomToBox(distShape(it.id).b, 0.6);
+      renderMap();
+      setTimeout(() => openPanel(it.st, it.id), 350);
+      return;
+    }
+    if (it.type === "cand" && it.chamber === "senate" && S.mode !== "senate") setMode("senate");
+    zoomToBox(stateBox(it.st));
+    setTimeout(() => openPanel(it.st), 350);
+  }
+  function showRegion(g) {
+    S.region = g;
+    zoomToBox(unionBox(g.states.map(stateBox)), 0.06);
+    renderMap();
+    const ds = S.L.districts.filter((d) => g.states.includes(d.st)), eD = Math.round(ds.reduce((a, d) => a + d.p, 0));
+    const close = ds.filter((d) => !d.sameParty && d.p > 0.25 && d.p < 0.75).sort((a, b) => Math.abs(a.p - 0.5) - Math.abs(b.p - 0.5));
+    const sen = S.L.races.filter((r) => g.states.includes(r.st)).map((r) => ({ r, p: raceP(r) })).sort((a, b) => Math.abs(a.p.R - 0.5) - Math.abs(b.p.R - 0.5));
+    const chipD = (d) => { const rt = rating(d.p, 1 - d.p); return `<button type="button" data-st="${d.st}" data-d="${d.id}">${d.id} <b style="color:${color(rt.lead)}">${rt.lead} ${pctShort(rt.p)}</b></button>`; };
+    const chipS = ({ r, p }) => { const rt = rating(p.D, p.R, p.I); return `<button type="button" data-st="${r.st}">${esc(r.name)} <b style="color:${color(rt.lead)}">${rt.lead} ${pctShort(rt.p)}</b></button>`; };
+    const card = $("#regionCard");
+    card.innerHTML = `<h3>${esc(g.name)} <button type="button" class="btn" id="regionClear">Show whole country</button></h3>
+      <p>${g.states.length} states and ${ds.length} House seats. Our best guess: <b class="dem">${eD} Democrats</b>, <b class="rep">${ds.length - eD} Republicans</b>.</p>
+      ${close.length ? `<p><b>Closest House races here</b></p><div class="chips">${close.slice(0, 10).map(chipD).join("")}</div>` : "<p>No close House races in this region.</p>"}
+      ${sen.length ? `<p style="margin-top:12px"><b>Senate races here</b></p><div class="chips">${sen.map(chipS).join("")}</div>` : ""}`;
+    card.hidden = false;
+    setTimeout(() => $("#mapFrame").scrollIntoView({ block: "nearest", behavior: "smooth" }), 60);
+  }
+  function clearRegion() {
+    if (!S.region) return;
+    S.region = null;
+    $("#regionCard").hidden = true;
+    renderMap();
+  }
+  function bindSearch() {
+    buildIndex();
+    const input = $("#search");
+    input.addEventListener("input", () => { results = search(input.value); active = results.length ? 0 : -1; showResults(); });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") { e.preventDefault(); active = Math.min(results.length - 1, active + 1); showResults(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); active = Math.max(0, active - 1); showResults(); }
+      else if (e.key === "Enter") { e.preventDefault(); if (results[active]) choose(results[active]); }
+      else if (e.key === "Escape") { $("#searchList").hidden = true; input.setAttribute("aria-expanded", "false"); }
+    });
+    input.addEventListener("focus", () => { if (input.value.trim()) { results = search(input.value); showResults(); } });
+    $("#searchList").addEventListener("mousedown", (e) => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(results[+li.dataset.i]); } });
+    document.addEventListener("click", (e) => { if (!e.target.closest("#searchBox")) $("#searchList").hidden = true; });
+    $$(".eg").forEach((b) => (b.onclick = () => { input.value = b.dataset.q; results = search(b.dataset.q); active = 0; if (results[0]) choose(results[0]); }));
+    $("#regionCard").addEventListener("click", (e) => {
+      if (e.target.closest("#regionClear")) { clearRegion(); animateTo(FULL); $("#search").value = ""; return; }
+      const b = e.target.closest("[data-st]");
+      if (b) { if (b.dataset.d && S.mode !== "house") setMode("house"); if (!b.dataset.d && S.mode !== "senate") setMode("senate"); openPanel(b.dataset.st, b.dataset.d); }
+    });
   }
 
   // ---------- make your own prediction ----------
@@ -259,18 +557,18 @@
     renderMap();
     if (on) $("#build").scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
-  function cyclePick(st) {
+  function cyclePick(key) {
     const picks = S.pick[S.mode];
     let order;
-    if (S.mode === "senate") { const r = raceBy(st); if (!r) return; order = [r.altParty, "R"]; }
-    else { if (!distsOf(st).length) return; order = ["D", "R"]; }
-    const i = order.indexOf(picks[st]);
-    if (i === -1) picks[st] = order[0]; else if (i === order.length - 1) delete picks[st]; else picks[st] = order[i + 1];
+    if (S.mode === "senate") { const r = raceBy(key); if (!r) return; order = [r.altParty, "R"]; }
+    else { const d = distBy(key); if (!d || d.sameParty) return; order = ["D", "R"]; }
+    const i = order.indexOf(picks[key]);
+    if (i === -1) picks[key] = order[0]; else if (i === order.length - 1) delete picks[key]; else picks[key] = order[i + 1];
     renderMap();
   }
   function fillFavorites() {
     if (S.mode === "senate") for (const r of S.L.races) { if (S.pick.senate[r.st]) continue; const p = raceP(r); S.pick.senate[r.st] = p.R >= Math.max(p.D, p.I) ? "R" : p.D >= p.I ? "D" : "I"; }
-    else for (const st of Object.keys(STATE_NAMES)) { if (S.pick.house[st] || !distsOf(st).length) continue; S.pick.house[st] = houseShare(st) >= 0.5 ? "D" : "R"; }
+    else for (const d of S.L.districts) { if (S.pick.house[d.id] || d.sameParty) continue; S.pick.house[d.id] = d.p >= 0.5 ? "D" : "R"; }
     renderMap();
   }
   let buildTimer;
@@ -278,7 +576,7 @@
     const senate = S.mode === "senate", picks = S.pick[S.mode], keys = Object.keys(picks);
     $("#buildHow").textContent = senate
       ? "Tap a state to give its Senate race to the Democrats (or the independent). Tap again for the Republicans. Tap a third time to undo."
-      : "Tap a state to give all of its House seats to the Democrats. Tap again for the Republicans. Tap a third time to undo.";
+      : "Tap a district to give it to the Democrats. Tap again for the Republicans. Tap a third time to undo. Zoom in to reach small districts.";
     let dLock, rLock, total, need;
     if (senate) {
       dLock = S.L.senate.notUp.D + keys.filter((k) => picks[k] !== "R").length;
@@ -286,7 +584,7 @@
       total = 100; need = 51;
     } else {
       dLock = 0; rLock = 0;
-      for (const d of S.L.districts) { const pk = picks[d.st]; if (pk === "D") dLock++; else if (pk === "R") rLock++; }
+      for (const d of S.L.districts) { const pk = picks[d.id]; if (pk === "D") dLock++; else if (pk === "R") rLock++; }
       total = 435; need = 218;
     }
     const open = total - dLock - rLock;
@@ -305,7 +603,7 @@
         sub = "Every race is decided in your map.";
       } else if (!keys.length) {
         say = `Our forecast: ${PARTIES[lead]} have ${aChance(pl)} of winning the ${ch}.`;
-        sub = "Start tapping states to see how your picks change the outcome.";
+        sub = `Start tapping ${senate ? "states" : "districts"} to see how your picks change the outcome.`;
       } else {
         say = `With your picks, ${PARTIES[lead]} have ${aChance(pl)} of winning the ${ch}.`;
         sub = `The races you haven't picked are filled in with our forecast. Expected result: ${senate ? `${Math.round(100 - res.R)} Democrats, ${Math.round(res.R)} Republicans` : `${Math.round(res.D)} Democrats, ${435 - Math.round(res.D)} Republicans`}.`;
@@ -325,13 +623,14 @@
     $("#panel").setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     $$("#mapSvg .st").forEach((p) => p.classList.toggle("sel", p.dataset.st === st));
+    $$("#mapSvg .dist").forEach((p) => p.classList.toggle("sel", p.dataset.d === focusD));
     try { history.replaceState(null, "", "#" + st); } catch {}
     setTimeout(() => { if (focusD) { const el = $(`.district[data-id="${focusD}"]`); el?.scrollIntoView({ block: "center" }); el?.querySelector("button")?.focus({ preventScroll: true }); } else $("#panelClose").focus({ preventScroll: true }); }, 60);
     const race = raceBy(st);
     if (race && !STATIC) liveRace(race);
   }
   function closePanel() {
-    S.open = null;
+    S.open = null; S.focusD = null;
     $("#panel").classList.remove("open"); $("#scrim").classList.remove("open");
     $("#panel").setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
@@ -633,14 +932,14 @@
   async function boot() {
     try {
       const v = Date.now(), get = (u) => fetch(u, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(u); return r.json(); });
-      const [L, H, G] = await Promise.all([get(`data/latest.json?t=${v}`), get(`data/history.json?t=${v}`), get("data/states.json")]);
-      Object.assign(S, { L, H, G, PI: Object.fromEntries((L.pollsters || []).map((p) => [p.name, p])) });
+      const [L, H, G, DG] = await Promise.all([get(`data/latest.json?t=${v}`), get(`data/history.json?t=${v}`), get("data/states.json"), get("data/districts.json")]);
+      Object.assign(S, { L, H, G, D: DG.districts, PI: Object.fromEntries((L.pollsters || []).map((p) => [p.name, p])) });
     } catch {
       $("#lede").textContent = "The forecast didn't load. Please check your internet connection and refresh the page.";
       return;
     }
     renderAll();
-    bindMap(); bindPanel(); bindClosest();
+    bindMap(); bindPanel(); bindClosest(); bindSearch();
     $("#pollsterMore").onclick = () => { S.allPollsters = !S.allPollsters; renderPollsters(); };
     let rt, lastW = innerWidth;
     addEventListener("resize", () => { if (Math.abs(innerWidth - lastW) < 30) return; lastW = innerWidth; clearTimeout(rt); rt = setTimeout(() => { trendChart($("#trendHouse"), S.H.house.combined); trendChart($("#trendSenate"), S.H.senate.combined); if (S.open) { const r = raceBy(S.open); if (r) drawPollChart(r); } }, 200); });

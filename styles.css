@@ -267,3 +267,53 @@ h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px; }
   .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); font-size: 14px; gap: 6px 12px; }
   .seatbar .keys { font-size: 14px; }
 }
+
+/* ---------- search ---------- */
+.search { position: relative; margin-top: 14px; max-width: 720px; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+.search input { width: 100%; min-height: 54px; border: 2px solid var(--ink-3); border-radius: 10px; padding: 12px 16px 12px 44px; font: 18px var(--font); background: var(--bg); color: var(--ink); }
+.search input:focus { border-color: var(--focus); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+.search-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 6px); list-style: none; margin: 0; padding: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.16); max-height: min(420px, 60vh); overflow-y: auto; }
+.search-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; }
+.search-list li[aria-selected="true"], .search-list li:hover { background: var(--bg-soft); }
+.search-list .s-label { font-weight: 700; font-size: 17px; }
+.search-list .s-sub { grid-column: 1; font-size: 14px; color: var(--ink-2); }
+.search-list .s-type { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-size: 13px; font-weight: 700; color: var(--ink-3); }
+.search-list .s-odds { grid-row: 1 / span 2; grid-column: 2; align-self: center; text-align: right; font-weight: 800; font-size: 15px; }
+.search-list .s-empty { color: var(--ink-2); cursor: default; }
+.search-hint { margin: 8px 0 0; font-size: 15px; color: var(--ink-3); }
+.search-hint .eg { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--ink-2); text-decoration: underline; cursor: pointer; }
+.region-card { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; background: var(--bg-soft); }
+.region-card h3 { margin: 0 0 4px; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.region-card p { margin: 0 0 10px; color: var(--ink-2); }
+.region-card .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.region-card .chips button { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 10px; font: 600 15px var(--font); cursor: pointer; }
+.region-card .chips button:hover { border-color: var(--ink); }
+.region-card .chips b { font-weight: 800; }
+
+/* ---------- rating bar (like a seat tally) ---------- */
+.rating-bar { margin: 4px 0 14px; }
+.rating-bar .segs { display: flex; height: 34px; border-radius: 6px; overflow: hidden; }
+.rating-bar .segs > div { display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
+.rating-bar .under { position: relative; height: 28px; }
+.rating-bar .tri { position: absolute; top: 2px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.rating-bar .tri::before { content: ""; border: 7px solid transparent; border-bottom-color: var(--ink); border-top: 0; margin-bottom: 2px; }
+.rating-bar .ends { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+
+/* ---------- zoomable map ---------- */
+.map-box { position: relative; }
+.zoom { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 8px; }
+.zbtn { width: 44px; padding: 0; font-size: 22px; line-height: 1; }
+.map-frame { position: relative; overflow: hidden; border-radius: 6px; touch-action: pan-y; }
+.map-frame.zoomed { touch-action: none; cursor: grab; }
+.map-frame.dragging { cursor: grabbing; }
+.map-note { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(21, 23, 28, .85); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 16px; font-weight: 600; pointer-events: none; text-align: center; }
+.map .dist { stroke: var(--bg); stroke-width: .6; vector-effect: non-scaling-stroke; cursor: pointer; }
+.map .dist:hover, .map .dist:focus-visible { stroke: var(--ink); stroke-width: 2; outline: none; }
+.map .dist.sel { stroke: var(--ink); stroke-width: 3; }
+.map .dist.picked { stroke: #ffd24a; stroke-width: 2.4; }
+.map .st { vector-effect: non-scaling-stroke; }
+.map .dim { opacity: .28; }
+.map .borders { fill: none; stroke: var(--bg); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
+.map .nation { fill: none; stroke: var(--ink-3); stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: none; opacity: .5; }
+.map .dlbl { font-family: var(--font); font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; paint-order: stroke; stroke-linejoin: round; }
