@@ -37,6 +37,13 @@ jobs:
           cp index.html app.js styles.css og.png robots.txt sitemap.xml _site/
           cp -r img _site/
           cp data/latest.json data/history.json data/states.json data/districts.json data/photos.json _site/data/
+      - name: Create the Pages project on first run
+        uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create pollsvsodds --production-branch=main
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
