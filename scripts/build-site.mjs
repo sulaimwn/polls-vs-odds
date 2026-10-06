@@ -218,7 +218,22 @@ for (const [st, name] of Object.entries(STATE_NAMES)) {
 const t0 = Date.now();
 for (let i = 0; i < jobs.length; i += 8) await Promise.all(jobs.slice(i, i + 8).map((f) => f()));
 
-// ---------- 4) sitemap ----------
+// ---------- 4) redirects for near-miss links, and a real "not found" page ----------
+// /senate/pennsylvania/ (no Senate race this year) -> the state page; /house/pa-8/ -> /house/pa-08/
+const redirects = [];
+for (const [st, name] of Object.entries(STATE_NAMES)) {
+  const slug = slugify(name);
+  if (!L.races.some((r) => r.st === st)) redirects.push([`/senate/${slug}`, `/state/${slug}/`], [`/senate/${slug}/`, `/state/${slug}/`]);
+  redirects.push([`/${slug}`, `/state/${slug}/`], [`/${slug}/`, `/state/${slug}/`]);
+}
+for (const d of L.districts) {
+  const id = d.id.toLowerCase();
+  if (d.n > 0 && d.n < 10) redirects.push([`/house/${d.st.toLowerCase()}-${d.n}`, `/house/${id}/`], [`/house/${d.st.toLowerCase()}-${d.n}/`, `/house/${id}/`]);
+}
+write("_redirects", redirects.map(([from, to]) => `${from} ${to} 301`).join("\n") + "\n");
+write("404.html", TEMPLATE.replace("<head>", `<head>\n<meta name="robots" content="noindex">`).replace(/<title>[^<]*<\/title>/, "<title>Page not found | Polls vs. Odds</title>"));
+
+// ---------- 5) sitemap ----------
 const day = L.updated.slice(0, 10);
 write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${day}</lastmod><changefreq>hourly</changefreq><priority>1.0</priority></url>\n${pages.map((p) => `  <url><loc>${SITE}${p}</loc><lastmod>${day}</lastmod><changefreq>daily</changefreq></url>`).join("\n")}\n</urlset>\n`);
 console.log(`built ${OUT}: ${pages.length} race/state pages, ${jobs.length} preview images in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
