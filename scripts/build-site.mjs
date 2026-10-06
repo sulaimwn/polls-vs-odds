@@ -43,7 +43,7 @@ const write = (rel, data) => { const f = path.join(OUT, rel); fs.mkdirSync(path.
 // ---------- 1) the app and its data ----------
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(path.join(OUT, "data"), { recursive: true });
-for (const f of ["index.html", "app.js", "styles.css", "og.png", "robots.txt"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
+for (const f of ["index.html", "app.js", "styles.css", "og.png", "robots.txt", "favicon.ico", "favicon.svg", "favicon-96.png", "apple-touch-icon.png"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
 for (const f of ["latest.json", "history.json", "states.json", "districts.json", "photos.json"]) fs.copyFileSync(path.join(ROOT, "data", f), path.join(OUT, "data", f));
 fs.cpSync(path.join(ROOT, "img"), path.join(OUT, "img"), { recursive: true });
 
