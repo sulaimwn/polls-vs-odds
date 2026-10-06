@@ -6,6 +6,8 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
   const STATIC = !!window.CR_STATIC; // snapshot copy where live market calls are blocked
+  const BASE = STATIC ? "" : "/";
+  const asset = (p) => (!p || /^(data:|https?:|\/)/.test(p) ? p : BASE + p);
   const DAY = 86400;
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const STATE_NAMES = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming" };
@@ -43,7 +45,7 @@
 
   function photo(c, size = "") {
     const cls = `photo ${size} ${c.party || "O"}`;
-    if (c.img) return `<span class="${cls}"><img src="${esc(c.img)}" alt="Photo of ${esc(c.name)}" loading="lazy" onerror="this.parentNode.textContent='${esc(initials(c.name))}'"></span>`;
+    if (c.img) return `<span class="${cls}"><img src="${esc(asset(c.img))}" alt="Photo of ${esc(c.name)}" loading="lazy" onerror="this.parentNode.textContent='${esc(initials(c.name))}'"></span>`;
     return `<span class="${cls}" aria-hidden="true">${c.generic ? c.party : esc(initials(c.name))}</span>`;
   }
   const split = (pL, colL, pR, colR) => `<div class="split"><i style="width:${pL * 100}%;background:${colL}"></i><i style="width:${Math.max(0, 1 - pL - pR) * 100}%;background:var(--toss)"></i><i style="width:${pR * 100}%;background:${colR}"></i></div>`;
@@ -650,6 +652,28 @@
     }, 20);
   }
 
+  // ---------- race addresses: /senate/texas/, /house/pa-08/, /state/pennsylvania/ ----------
+  const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function racePath(st, focusD) {
+    if (focusD) return `/house/${focusD.toLowerCase()}/`;
+    return `/${raceBy(st) ? "senate" : "state"}/${slugify(STATE_NAMES[st])}/`;
+  }
+  function goRoute(R) {
+    if (!R || !STATE_NAMES[R.st]) return;
+    if (R.type === "house" && R.id) {
+      if (S.mode !== "house") setMode("house");
+      S.focusD = R.id;
+      const shape = distShape(R.id);
+      if (shape) zoomToBox(shape.b, 0.6);
+      renderMap();
+      openPanel(R.st, R.id);
+      return;
+    }
+    if (R.type === "senate" && S.mode !== "senate") setMode("senate");
+    zoomToBox(stateBox(R.st));
+    openPanel(R.st);
+  }
+
   // ---------- state panel ----------
   function openPanel(st, focusD) {
     if (!STATE_NAMES[st]) return;
@@ -661,7 +685,8 @@
     document.body.style.overflow = "hidden";
     $$("#mapSvg .st").forEach((p) => p.classList.toggle("sel", p.dataset.st === st));
     $$("#mapSvg .dist").forEach((p) => p.classList.toggle("sel", p.dataset.d === focusD));
-    try { history.replaceState(null, "", "#" + st); } catch {}
+    try { history.replaceState(null, "", STATIC ? "#" + st : racePath(st, focusD)); } catch {}
+    $("#panelShare").textContent = "Copy link";
     setTimeout(() => { if (focusD) { const el = $(`.district[data-id="${focusD}"]`); el?.scrollIntoView({ block: "center" }); el?.querySelector("button")?.focus({ preventScroll: true }); } else $("#panelClose").focus({ preventScroll: true }); }, 60);
     const race = raceBy(st);
     if (race && !STATIC) liveRace(race);
@@ -672,7 +697,7 @@
     $("#panel").setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     $$("#mapSvg .sel").forEach((p) => p.classList.remove("sel"));
-    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    try { history.replaceState(null, "", STATIC ? location.pathname + location.search : "/"); } catch {}
     S.lastFocus?.focus?.({ preventScroll: true });
   }
   // pollster info, in words
@@ -776,6 +801,13 @@
   }
   function bindPanel() {
     $("#panelClose").onclick = closePanel;
+    $("#panelShare").hidden = STATIC;
+    $("#panelShare").onclick = async () => {
+      const url = location.origin + racePath(S.open, S.focusD), btn = $("#panelShare");
+      try { await navigator.clipboard.writeText(url); btn.textContent = "Link copied ✓"; }
+      catch { btn.textContent = url.replace(/^https?:\/\//, ""); }
+      setTimeout(() => (btn.textContent = "Copy link"), 2500);
+    };
     $("#scrim").onclick = closePanel;
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.open) closePanel(); });
     $("#panelBody").addEventListener("click", (e) => {
@@ -995,7 +1027,7 @@
   async function boot() {
     try {
       const v = Date.now(), get = (u) => fetch(u, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(u); return r.json(); });
-      const [L, H, G, DG] = await Promise.all([get(`data/latest.json?t=${v}`), get(`data/history.json?t=${v}`), get("data/states.json"), get("data/districts.json")]);
+      const [L, H, G, DG] = await Promise.all([get(asset(`data/latest.json?t=${v}`)), get(asset(`data/history.json?t=${v}`)), get(asset("data/states.json")), get(asset("data/districts.json"))]);
       Object.assign(S, { L, H, G, D: DG.districts, PI: Object.fromEntries((L.pollsters || []).map((p) => [p.name, p])) });
     } catch {
       $("#lede").textContent = "The forecast didn't load. Please check your internet connection and refresh the page.";
@@ -1007,7 +1039,8 @@
     let rt, lastW = innerWidth;
     addEventListener("resize", () => { if (Math.abs(innerWidth - lastW) < 30) return; lastW = innerWidth; clearTimeout(rt); rt = setTimeout(() => { trendChart($("#trendHouse"), S.H.house.combined); trendChart($("#trendSenate"), S.H.senate.combined); if (S.open) { const r = raceBy(S.open); if (r) drawPollChart(r); } }, 200); });
     const hash = location.hash.slice(1).toUpperCase();
-    if (STATE_NAMES[hash]) setTimeout(() => openPanel(hash), 200);
+    if (window.CR_ROUTE) setTimeout(() => goRoute(window.CR_ROUTE), 150);
+    else if (STATE_NAMES[hash]) setTimeout(() => openPanel(hash), 200);
     addEventListener("hashchange", () => { const h = location.hash.slice(1).toUpperCase(); if (STATE_NAMES[h] && S.open !== h) openPanel(h); });
     if (!STATIC) {
       liveChambers();

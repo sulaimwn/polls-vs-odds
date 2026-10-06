@@ -40,7 +40,9 @@ npm run build:artifact  # self-contained copy in dist-artifact/ (photos inlined)
 
 ## Files
 
-- `index.html`, `styles.css`, `app.js`: the site (no build step, no framework)
+- `index.html`, `styles.css`, `app.js`: the site (no framework)
+- `scripts/build-site.mjs`: builds the deployable site, a page for every race (`/senate/texas/`, `/house/pa-08/`, `/state/ohio/`) with its own preview image, and the sitemap
+- `worker/`: Cloudflare timer that triggers the refresh at the top of every hour
 - `scripts/update.mjs`: data pipeline and polling model
 - `scripts/photos.mjs`: candidate photos
 - `scripts/geo.mjs`: state map; `scripts/districts-geo.mjs`: 2026 House district map (sources listed at the top of the file)

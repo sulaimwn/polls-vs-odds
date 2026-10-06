@@ -3,8 +3,10 @@ name: Refresh data and deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
+  # The exact hourly trigger comes from the Cloudflare timer in worker/ (GitHub's own schedule often runs hours late).
+  # This schedule stays as a backup.
   schedule:
-    - cron: "7 * * * *" # hourly: polls, Kalshi and Polymarket snapshot (Polymarket also updates live in the browser)
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 concurrency:
@@ -22,20 +24,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Install the site font for preview images
+        run: |
+          mkdir -p ~/.fonts
+          curl -sfL -o ~/.fonts/LibreFranklin.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/librefranklin/LibreFranklin%5Bwght%5D.ttf" && fc-cache -f || true
       - name: Refresh member list
         run: curl -sf -o scripts/legislators-current.json https://unitedstates.github.io/congress-legislators/legislators-current.json || true
       - name: Photos for any new candidates
         run: node scripts/photos.mjs || true
       - name: Pull polls and markets, run the model
         run: node scripts/update.mjs
-      - name: Link preview image
+      - name: Link preview image for the homepage
         run: node scripts/og.mjs
-      - name: Assemble site
-        run: |
-          mkdir -p _site/data
-          cp index.html app.js styles.css og.png robots.txt sitemap.xml _site/
-          cp -r img _site/
-          cp data/latest.json data/history.json data/states.json data/districts.json data/photos.json _site/data/
+      - name: Build the site, race pages and preview images
+        run: node scripts/build-site.mjs _site
       - name: Create the Pages project on first run
         uses: cloudflare/wrangler-action@v3
         continue-on-error: true

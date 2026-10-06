@@ -15,7 +15,7 @@ fs.mkdirSync(new URL("data/", out), { recursive: true });
 const html = fs.readFileSync(new URL("index.html", root), "utf8");
 const title = html.match(/<title>[\s\S]*?<\/title>/)[0];
 const fonts = html.match(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^>]+>/)[0];
-const body = html.match(/<body>([\s\S]*)<\/body>/)[1].replace('<script src="app.js" defer></script>', '<script>window.CR_STATIC = true;</script>\n<script src="app.js" defer></script>');
+const body = html.match(/<body>([\s\S]*)<\/body>/)[1].replace('<script src="/app.js" defer></script>', '<script>window.CR_STATIC = true;</script>\n<script src="app.js" defer></script>');
 fs.writeFileSync(new URL("index.html", out), `${title}\n${fonts}\n<link rel="stylesheet" href="styles.css">\n${body.trim()}\n`);
 for (const f of ["styles.css", "app.js"]) fs.copyFileSync(new URL(f, root), new URL(f, out));
 for (const f of ["history.json", "states.json", "districts.json", "photos.json"]) fs.copyFileSync(new URL(`data/${f}`, root), new URL(`data/${f}`, out));

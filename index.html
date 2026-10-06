@@ -10,6 +10,8 @@
 <meta property="og:title" content="Polls vs. Odds: 2026 Midterm Forecast from Polls and Prediction Markets">
 <meta property="og:description" content="What voters say. What bettors bet. One forecast for the House, the Senate and every district, and where the two disagree.">
 <meta property="og:image" content="https://pollsvsodds.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:url" content="https://pollsvsodds.com/">
 <meta property="og:site_name" content="Polls vs. Odds">
 <meta name="twitter:card" content="summary_large_image">
@@ -17,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,400..900;1,400..700&display=swap">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
@@ -185,12 +187,15 @@
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-hidden="true">
   <div class="panel-head">
     <h2 id="panelTitle">State</h2>
-    <button type="button" class="btn close-btn" id="panelClose">Close ✕</button>
+    <div class="panel-actions">
+      <button type="button" class="btn" id="panelShare">Copy link</button>
+      <button type="button" class="btn close-btn" id="panelClose">Close ✕</button>
+    </div>
   </div>
   <div class="panel-body" id="panelBody"></div>
 </aside>
 <div class="tip" id="tip" hidden></div>
 
-<script src="app.js" defer></script>
+<script src="/app.js" defer></script>
 </body>
 </html>

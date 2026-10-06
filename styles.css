@@ -331,3 +331,7 @@ h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px; }
 .src-label { font-weight: 700; color: var(--ink-2); }
 .src-say { margin: 0 0 14px; font-size: 16px; }
 @media (max-width: 480px) { .src-row .tabs button { padding: 10px 12px; font-size: 15px; } }
+
+/* panel header actions */
+.panel-actions { display: flex; gap: 8px; flex-shrink: 0; }
+#panelShare { white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }

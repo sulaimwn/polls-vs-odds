@@ -1,0 +1,31 @@
+name: Install the hourly refresh timer
+
+# Deploys worker/ to Cloudflare. Needs two things set up once:
+#   - repo secret GH_DISPATCH_TOKEN: a fine-grained GitHub token for this repo with "Actions: Read and write"
+#   - the CLOUDFLARE_API_TOKEN secret must include the "Workers Scripts: Edit" permission
+on:
+  push:
+    branches: [main]
+    paths: ["worker/**", ".github/workflows/refresh-timer.yml"]
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    env:
+      DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Waiting on setup
+        if: env.DISPATCH_TOKEN == ''
+        run: echo "::notice::Add the GH_DISPATCH_TOKEN secret, then re-run this workflow to install the hourly timer."
+      - name: Deploy the timer to Cloudflare
+        if: env.DISPATCH_TOKEN != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
+          secrets: |
+            DISPATCH_TOKEN
